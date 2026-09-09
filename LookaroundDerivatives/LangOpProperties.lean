@@ -216,6 +216,29 @@ theorem concat_unit_l_derLAhd : ∀ {a : α} {l : Lang α}, ◁ 𝟙 ⊙ (derLAh
     simp
     exact ⟨(derLAhd_mem' mem).1, mem⟩
 
+
+theorem concat_subeps_inter {α} : ∀ {k l : Lang α},
+                                    k ⊆ 𝟙 → l ⊆ 𝟙 → k ⊙ l ≐ k ∩ l := by
+  intro k l k_sub l_sub t
+  apply Iff.intro
+  . intro ⟨m₁, m₂, mt_eq, k_m, l_m⟩
+    have m₁_eq : m₁ = [] := k_sub k_m
+    have m₂_eq : m₂ = [] := l_sub l_m
+    subst m₁_eq
+    subst m₂_eq
+    simp at mt_eq k_m l_m
+    rw [intersection, triple_eta t, mt_eq]
+    exact ⟨k_m, l_m⟩
+
+  . intro ⟨k_m, l_m⟩
+    have mt_eq : mtch t = [] := k_sub k_m
+    rw [triple_eta t, mt_eq] at k_m l_m
+    rw [concat]
+    exists [], []
+    simp [mt_eq, k_m, l_m]
+
+
+
 -------------------------------------------------------------------------
 
 theorem inter_assoc : ∀ {l₁ l₂ l₃ : Lang α}, l₁ ∩ (l₂ ∩ l₃) ≐ (l₁ ∩ l₂) ∩ l₃ := by
@@ -305,6 +328,11 @@ theorem inter_compl : ∀ {l : Lang α}, l ∩ (𝕋 \ l) ≐ ∅ := by
 
 -----------------------------------------------------------------------------
 
+theorem lbhd_subeps : ∀ {l : Lang α}, ◁ l ⊆ 𝟙 := by
+  intro l t mem
+  exact mem.1
+
+
 theorem lbhd_unit_lahd {α} : @LEq α (◁ 𝟙) (▷ (◁ 𝟙 ⊙ 𝕋)) := by
   intro t
   rw [lookbehind, unit, mtch, lookahead]
@@ -324,7 +352,29 @@ theorem lbhd_zero {α} : @LEq α (◁ ∅) ∅ := by
   intro t
   simp [lookbehind, empty]
 
+theorem lbhd_inter : ∀ {k l : Lang α}, ◁ k ∩ ◁ l ≐ ◁ (k ∩ l) := by
+  intro k l t
+  simp [lookbehind, intersection]
+  ac_nf
+
+theorem lbhd_union : ∀ {k l : Lang α}, ◁ k ∪ ◁ l ≐ ◁ (k ∪ l) := by
+  intro k l t
+  simp [lookbehind, union, and_or_left]
+
+theorem lbhd_diff : ∀ {k l : Lang α}, ◁ k \ ◁ l ≐ ◁ (k \ l) := by
+  intro k l t
+  apply Iff.intro
+  . intro ⟨⟨mt_eq, k_m⟩, nl_m⟩
+    exact ⟨mt_eq, k_m, λ l_m => nl_m ⟨mt_eq, l_m⟩⟩
+  . intro ⟨mt_eq, k_m, nl_m⟩
+    exact ⟨⟨mt_eq, k_m⟩, λ l_m => nl_m l_m.2⟩
+
 -------------------------------------------------------------------------------
+
+theorem lahd_subeps : ∀ {l : Lang α}, ▷ l ⊆ 𝟙 := by
+  intro l t mem
+  exact mem.1
+
 
 theorem lahd_zero {α} : @LEq α (▷ ∅) ∅ := by
   intro t
@@ -357,8 +407,11 @@ theorem lahd_union : ∀ {k l : Lang α}, ▷ k ∪ ▷ l ≐ ▷ (k ∪ l) := b
 
 theorem lahd_diff : ∀ {k l : Lang α}, ▷ k \ ▷ l ≐ ▷ (k \ l) := by
   intro k l t
-  simp [lookahead, diff]
-  grind
+  apply Iff.intro
+  . intro ⟨⟨mt_eq, k_m⟩, nl_m⟩
+    exact ⟨mt_eq, k_m, λ l_m => nl_m ⟨mt_eq, l_m⟩⟩
+  . intro ⟨mt_eq, k_m, nl_m⟩
+    exact ⟨⟨mt_eq, k_m⟩, λ l_m => nl_m l_m.2⟩
 
 
 theorem lahd_concat_assoc : ∀ {l₁ l₂ l₃ : Lang α},
@@ -367,26 +420,8 @@ theorem lahd_concat_assoc : ∀ {l₁ l₂ l₃ : Lang α},
   rw [concat_assoc]
 
 theorem lahd_concat_inter {α} : ∀ {k l : Lang α}, ▷ k ⊙ ▷ l ≐ ▷ k ∩ ▷ l := by
-  intro k l t
-  apply Iff.intro
-  . intro ⟨m₁, m₂, eq, lk_mem, ll_mem⟩
-    rw [lookahead] at lk_mem ll_mem
-    rw [mtch, behind, ahead] at lk_mem ll_mem
-    rw [lk_mem.1] at ll_mem eq
-    rw [ll_mem.1] at lk_mem eq
-    rw [intersection, lookahead, lookahead]
-    simp [eq]
-    simp at lk_mem ll_mem
-    exact ⟨lk_mem.2, ll_mem.2⟩
-
-  . intro ⟨lk_mem, ll_mem⟩
-    rw [concat]
-    rw [lookahead] at lk_mem ll_mem
-
-    exists [], []
-    rw [lookahead, lookahead, mtch, behind, ahead, mtch, behind, ahead]
-
-    simp [lk_mem, ll_mem]
+  intro k l
+  exact concat_subeps_inter lahd_subeps lahd_subeps
 
 
 --------------------------------------------------------------------------
@@ -542,10 +577,6 @@ theorem kstar_expand' : ∀ {l : Lang α}, l⋆ ≐ 𝟙 ∪ l⋆ ⊙ l := by
   rw [kstar_concat_lem]
   rw [←union]
 
-
-def LEqSubset (k l : Lang α) := ∀ {t}, k t → l t
-
-infix:50 " ⊆ " => LEqSubset
 
 theorem subset_union_lemma {k l : Lang α} : k ⊆ l ↔ k ∪ l ≐ l := by
   apply Iff.intro

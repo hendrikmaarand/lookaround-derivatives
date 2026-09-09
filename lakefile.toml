@@ -1,6 +1,6 @@
 name = "lookaround-derivatives"
 version = "0.1.0"
-defaultTargets = ["lookaround-derivatives"]
+defaultTargets = ["LookaroundDerivatives"]
 
 [[lean_lib]]
 name = "LookaroundDerivatives"

@@ -7,6 +7,10 @@ def LEq (k l : Lang α) :=
   ∀ t, k t ↔ l t
 
 
+def LSub (k l : Lang α) :=
+  ∀ {t}, k t → l t
+
+
 ----------------------------------------------------------
 -- Language constructors we consider
 
@@ -83,6 +87,7 @@ prefix:max "▷" => lookahead
 
 infix:50 " ≐ " => LEq
 
+infix:50 " ⊆ " => LSub
 
 ----------------------------------------------
 -- nullability and derivatives
