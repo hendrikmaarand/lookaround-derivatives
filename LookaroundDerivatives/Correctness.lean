@@ -22,11 +22,9 @@ def sem (r : RE α) : Lang α :=
 notation "⟦" r "⟧" => sem r
 
 
-theorem equiv_sound {r s : RE α} (eq : r ≡ s) : ⟦ r ⟧ ≐ ⟦ s ⟧ := by
+theorem equiv_sound {r s : RE α} (eq : r ≡ s) : ⟦ r ⟧ = ⟦ s ⟧ := by
   match eq with
-  | .plusIdem  => simp [sem]
-                  exact leq_symm union_idem
-
+  | .plusIdem  => simp [sem, union_idem]
   | .plusComm  => simp [sem, union_comm]
   | .plusAssoc => simp [sem, union_assoc]
 
@@ -41,7 +39,8 @@ theorem equiv_sound {r s : RE α} (eq : r ≡ s) : ⟦ r ⟧ ≐ ⟦ s ⟧ := by
   | .subZeroL => simp [sem, diff_zero_l]
 
   | .lbhdZero => simp [sem, lbhd_zero]
-  | .lbhdUnit => simp [sem, lbhd_unit_lahd]
+  | .lbhdUnit => simp only [sem]
+                 exact lbhd_unit_lahd
 
   | .lahdZero => simp [sem, lahd_zero]
   | .lahdInter => simp [sem, lahd_inter]
@@ -54,17 +53,24 @@ theorem equiv_sound {r s : RE α} (eq : r ≡ s) : ⟦ r ⟧ ≐ ⟦ s ⟧ := by
 
   | .distrL => simp [sem, concat_distr_union_l]
 
-  | .refl eq => rw [eq]; exact leq_refl
-  | .sym  eq => exact leq_symm (equiv_sound eq)
-  | .trans eq₁ eq₂ => exact leq_trans (equiv_sound eq₁) (equiv_sound eq₂)
+  | .refl eq => rw [eq]
+  | .sym  eq => exact (equiv_sound eq).symm
+  | .trans eq₁ eq₂ => exact (equiv_sound eq₁).trans (equiv_sound eq₂)
 
-  | .plusCong r_eq s_eq => simp [sem, union_congr (equiv_sound r_eq) (equiv_sound s_eq)]
-  | .multCong r_eq s_eq => simp [sem, concat_congr (equiv_sound r_eq) (equiv_sound s_eq)]
-  | .interCong r_eq s_eq => simp [sem, intersection_congr (equiv_sound r_eq) (equiv_sound s_eq)]
-  | .subCong r_eq s_eq => simp [sem, diff_congr (equiv_sound r_eq) (equiv_sound s_eq)]
-  | .starCong r_eq => simp [sem, kstar_congr (equiv_sound r_eq)]
-  | .lbhdCong r_eq => simp [sem, lookbehind_congr (equiv_sound r_eq)]
-  | .lahdCong r_eq => simp [sem, lookahead_congr (equiv_sound r_eq)]
+  | .plusCong r_eq s_eq => simp only [sem]
+                           rw [equiv_sound r_eq, equiv_sound s_eq]
+  | .multCong r_eq s_eq => simp only [sem]
+                           rw [equiv_sound r_eq, equiv_sound s_eq]
+  | .interCong r_eq s_eq => simp only [sem]
+                            rw [equiv_sound r_eq, equiv_sound s_eq]
+  | .subCong r_eq s_eq => simp only [sem]
+                          rw [equiv_sound r_eq, equiv_sound s_eq]
+  | .starCong r_eq => simp only [sem]
+                      rw [equiv_sound r_eq]
+  | .lbhdCong r_eq => simp only [sem]
+                      rw [equiv_sound r_eq]
+  | .lahdCong r_eq => simp only [sem]
+                      rw [equiv_sound r_eq]
 
 
 
@@ -111,8 +117,7 @@ theorem N_correct (r : RE α) : nlbl ⟦ r ⟧ ↔ N r := by
 mutual
 
 theorem DBhd_correct {α} [DecidableEq α] (a : α) (r : RE α)
-    : derLBhd a ⟦ r ⟧ ≐ ⟦ DBhd a r ⟧ := by
-  intro t
+    : derLBhd a ⟦ r ⟧ = ⟦ DBhd a r ⟧ := by
   match r with
   | .symbol b =>
       rw [sem, derLBhd_symb, DBhd, sem]
@@ -120,45 +125,33 @@ theorem DBhd_correct {α} [DecidableEq α] (a : α) (r : RE α)
       rw [sem, derLBhd_empty, DBhd, sem]
   | .plus r s =>
       rw [sem, derLBhd_union, DBhd, sem]
-      have ih_r := DBhd_correct a r
-      have ih_s := DBhd_correct a s
-      rw [union_congr ih_r ih_s]
+      rw [DBhd_correct a r, DBhd_correct a s]
   | .one =>
       rw [sem, derLBhd_unit, DBhd, sem]
   | .mult r s =>
       rw [sem, derLBhd_concat, DBhd, sem]
-      have ih_r := DBhd_correct a r
-      have ih_s := DBhd_correct a s
-      rw [concat_congr ih_r ih_s]
+      rw [DBhd_correct a r, DBhd_correct a s]
   | .etop =>
       rw [sem, derLBhd_top, DBhd, sem]
   | .inter r s =>
       rw [sem, derLBhd_inter, DBhd, sem]
-      have ih_r := DBhd_correct a r
-      have ih_s := DBhd_correct a s
-      rw [intersection_congr ih_r ih_s]
+      rw [DBhd_correct a r, DBhd_correct a s]
   | .sub r s =>
       rw [sem, derLBhd_diff, DBhd, sem]
-      have ih_r := DBhd_correct a r
-      have ih_s := DBhd_correct a s
-      rw [diff_congr ih_r ih_s]
+      rw [DBhd_correct a r, DBhd_correct a s]
   | .star r =>
       rw [sem, derLBhd_kstar, DBhd, sem]
-      have ih_r := DBhd_correct a r
-      rw [kstar_congr ih_r]
+      rw [DBhd_correct a r]
   | .lookbehind r =>
       rw [sem, derLBhd_lookbehind, DBhd, sem]
-      have ih_r := D_correct a r
-      rw [lookbehind_congr ih_r]
+      rw [D_correct a r]
   | .lookahead r =>
       rw [sem, derLBhd_lookahead, DBhd, sem]
-      have ih_r := DBhd_correct a r
-      rw [lookahead_congr ih_r]
+      rw [DBhd_correct a r]
 
 
 theorem D_correct {α} [DecidableEq α] (a : α) (r : RE α)
-    : der a ⟦ r ⟧ ≐ ⟦ D a r ⟧ := by
-  intro t
+    : der a ⟦ r ⟧ = ⟦ D a r ⟧ := by
   match r with
   | .symbol b =>
       if h : a = b then
@@ -171,38 +164,23 @@ theorem D_correct {α} [DecidableEq α] (a : α) (r : RE α)
       rw [sem, der_empty, D, sem]
   | .plus r s =>
       rw [sem, der_union, D, sem]
-      have ih_r := D_correct a r
-      have ih_s := D_correct a s
-      rw [union_congr ih_r ih_s]
+      rw [D_correct a r, D_correct a s]
   | .one =>
       rw [sem, der_unit, D, sem]
   | .mult r s =>
       rw [sem, der_concat, D, sem, sem, sem]
-
-      have ih_r := D_correct a r
-      have ih_s := D_correct a s
-      have ih_r' := DAhd_correct a r
-      have ih_s' := DBhd_correct a s
-
-      rw [union_congr (concat_congr ih_r ih_s') (concat_congr ih_r' ih_s)]
-
+      rw [D_correct a r, D_correct a s, DAhd_correct a r, DBhd_correct a s]
   | .etop =>
       rw [sem, der_top, D, sem, sem, sem, sem]
   | .inter r s =>
       rw [sem, der_inter, D, sem]
-      have ih_r := D_correct a r
-      have ih_s := D_correct a s
-      rw [intersection_congr ih_r ih_s]
+      rw [D_correct a r, D_correct a s]
   | .sub r s =>
       rw [sem, der_diff, D, sem]
-      have ih_r := D_correct a r
-      have ih_s := D_correct a s
-      rw [diff_congr ih_r ih_s]
+      rw [D_correct a r, D_correct a s]
   | .star r =>
       rw [sem, der_kstar, D, sem, sem]
-      have ih_r  := D_correct a r
-      have ih_r' := DBhd_correct a r
-      rw [concat_congr ih_r (kstar_congr ih_r')]
+      rw [D_correct a r, DBhd_correct a r]
   | .lookbehind r =>
       rw [sem, der_lookbehind, D, sem]
   | .lookahead r =>
@@ -210,8 +188,7 @@ theorem D_correct {α} [DecidableEq α] (a : α) (r : RE α)
 
 
 theorem DAhd_correct {α} [DecidableEq α] (a : α) (r : RE α)
-    : derLAhd a ⟦ r ⟧ ≐ ⟦ DAhd a r ⟧ := by
-  intro t
+    : derLAhd a ⟦ r ⟧ = ⟦ DAhd a r ⟧ := by
   match r with
   | .symbol b =>
       rw [sem, derLAhd_symb, DAhd, sem]
@@ -219,120 +196,88 @@ theorem DAhd_correct {α} [DecidableEq α] (a : α) (r : RE α)
       rw [sem, derLAhd_empty, DAhd, sem]
   | .plus r s =>
       rw [sem, derLAhd_union, DAhd, sem]
-      have ih_r := DAhd_correct a r
-      have ih_s := DAhd_correct a s
-      rw [union_congr ih_r ih_s]
+      rw [DAhd_correct a r, DAhd_correct a s]
   | .one =>
       rw [sem, derLAhd_unit, DAhd, sem, sem]
   | .mult r s =>
       rw [sem, derLAhd_concat, DAhd, sem]
-      have ih_r := DAhd_correct a r
-      have ih_s := DAhd_correct a s
-      rw [concat_congr ih_r ih_s]
+      rw [DAhd_correct a r, DAhd_correct a s]
   | .etop =>
       rw [sem, derLAhd_top, DAhd, sem, sem]
   | .inter r s =>
       rw [sem, derLAhd_inter, DAhd, sem]
-      have ih_r := DAhd_correct a r
-      have ih_s := DAhd_correct a s
-      rw [intersection_congr ih_r ih_s]
+      rw [DAhd_correct a r, DAhd_correct a s]
   | .sub r s =>
       rw [sem, derLAhd_diff, DAhd, sem]
-      have ih_r := DAhd_correct a r
-      have ih_s := DAhd_correct a s
-      rw [diff_congr ih_r ih_s]
+      rw [DAhd_correct a r, DAhd_correct a s]
   | .star r =>
       rw [sem, derLAhd_kstar, DAhd, sem, sem]
   | .lookbehind r =>
       rw [sem, derLAhd_lookbehind, DAhd]
-      exact DAhd_correct a r t
+      exact DAhd_correct a r
   | .lookahead r =>
       rw [sem, derLAhd_lookahead, DAhd, sem]
-      have ih_r := D_correct a r
-      rw [lookahead_congr ih_r]
+      rw [D_correct a r]
 
 end
 
 
 
 theorem wDBhd_correct [DecidableEq α] (w : List α) (r : RE α)
-        : wderLBhd w ⟦ r ⟧ ≐ ⟦ wDBhd w r ⟧ := by
-  intro u
+        : wderLBhd w ⟦ r ⟧ = ⟦ wDBhd w r ⟧ := by
   match w with
   | [] => rw [wderLBhd, wDBhd]
   | a :: w =>
-      rw [wderLBhd, wDBhd]
-      rw [wderLBhd_congr (DBhd_correct a r) w]
-      rw [wDBhd_correct]
+      rw [wderLBhd, wDBhd, DBhd_correct a r]
+      exact wDBhd_correct w (DBhd a r)
 
 theorem wD_correct [DecidableEq α] (w : List α) (r : RE α)
-        : wder w ⟦ r ⟧ ≐ ⟦ wD w r ⟧ := by
-  intro u
+        : wder w ⟦ r ⟧ = ⟦ wD w r ⟧ := by
   match w with
   | [] => rw [wder, wD]
   | a :: w =>
-      rw [wder, wD]
-      rw [wder_congr (D_correct a r) w]
-      rw [wD_correct]
+      rw [wder, wD, D_correct a r]
+      exact wD_correct w (D a r)
 
 theorem wDAhd_correct [DecidableEq α] (w : List α) (r : RE α)
-        : wderLAhd w ⟦ r ⟧ ≐ ⟦ wDAhd w r ⟧ := by
-  intro u
+        : wderLAhd w ⟦ r ⟧ = ⟦ wDAhd w r ⟧ := by
   match w with
   | [] => rw [wderLAhd, wDAhd]
   | a :: w =>
-      rw [wderLAhd, wDAhd]
-      rw [wderLAhd_congr (DAhd_correct a r) w]
-      rw [wDAhd_correct]
+      rw [wderLAhd, wDAhd, DAhd_correct a r]
+      exact wDAhd_correct w (DAhd a r)
 
 
-theorem tD_correct [DecidableEq α] (t : Triple α) (r : RE α) : tder t ⟦ r ⟧ ≐ ⟦ tD t r ⟧ := by
-  intro u
+theorem tD_correct [DecidableEq α] (t : Triple α) (r : RE α) : tder t ⟦ r ⟧ = ⟦ tD t r ⟧ := by
   rw [tder, tD]
-  simp
-
-  have eq := wder_congr (wDBhd_correct (behind t) r) (mtch t)
-  rw [wderLAhd_congr eq]
-
-  have eq' := wD_correct (mtch t) (wDBhd (behind t) r)
-  rw [wderLAhd_congr eq']
-
-  have eq'' := wDAhd_correct (ahead t) (wD (mtch t) (wDBhd (behind t) r))
-  rw [eq'']
+  simp only [Function.comp_apply]
+  rw [wDBhd_correct, wD_correct, wDAhd_correct]
 
 
-theorem xD_correct [DecidableEq α] (a : α) (r : RE α) : xder a ⟦ r ⟧ ≐ ⟦ xD a r ⟧ := by
-  intro t
+theorem xD_correct [DecidableEq α] (a : α) (r : RE α) : xder a ⟦ r ⟧ = ⟦ xD a r ⟧ := by
   rw [xder, xD, sem, sem]
-  rw [union, union, union, union]
   rw [DBhd_correct a r, D_correct a r, DAhd_correct a r]
 
-theorem wxD_correct [DecidableEq α] (w : List α) (r : RE α) : wxder w ⟦ r ⟧ ≐ ⟦ wxD w r ⟧ := by
-  intro t
+theorem wxD_correct [DecidableEq α] (w : List α) (r : RE α) : wxder w ⟦ r ⟧ = ⟦ wxD w r ⟧ := by
   match w with
   | [] => rw [wxder, wxD]
   | a :: w =>
-      rw [wxder, wxD]
-      rw [wxder_congr (xD_correct a r) w]
-      rw [wxD_correct w (xD a r)]
+      rw [wxder, wxD, xD_correct a r]
+      exact wxD_correct w (xD a r)
 
 -------------------------------------------------------------------------
 
 theorem N_tD_iff_mem {α} [DecidableEq α] : ∀ (t : Triple α) (r : RE α),
                                              N (tD t r) ↔ ⟦ r ⟧ t := by
   intro t r
-  rw [←N_correct]
-  rw [←nlbl_congr (tD_correct t r)]
-  rw [nlbl_tder_iff_lang_mem]
+  rw [←N_correct, ←tD_correct, nlbl_tder_iff_lang_mem]
 
 
 theorem N_wxD_iff_exists {α} [DecidableEq α]
                          : ∀ (u : List α) (r : RE α),
                              N (wxD u r) ↔ ∃ x y z, u = x ++ y ++ z ∧ ⟦ r ⟧ (x, y, z) := by
   intro u r
-  rw [←N_correct]
-  rw [←nlbl_congr (wxD_correct u r)]
-  rw [exists_mem_iff_wxder_nlbl]
+  rw [←N_correct, ←wxD_correct, exists_mem_iff_wxder_nlbl]
 
 --------------------------------------------------
 

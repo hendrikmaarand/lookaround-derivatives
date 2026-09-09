@@ -1,118 +1,36 @@
 import LookaroundDerivatives.Language
 
 
-theorem leq_refl : ∀ {l : Lang α}, l ≐ l := by
-  intro l t
-  rfl
-
-theorem leq_symm : ∀ {k l : Lang α}, k ≐ l → l ≐ k := by
-  intro k l eq t
-  rw [eq t]
-
-theorem leq_trans : ∀ {l₁ l₂ l₃ : Lang α}, l₁ ≐ l₂ → l₂ ≐ l₃ → l₁ ≐ l₃ := by
-  intro l₁ l₂ l₃ eq eq' t
-  rw [eq t, eq' t]
-
-
-------------------------------------------------------
--- congruences of constructors
-
-theorem union_congr {k k' l l' : Lang α} : k ≐ k' → l ≐ l' → k ∪ l ≐ k' ∪ l' := by
-  intro k_eq l_eq t
-  rw [union, union]
-  rw [k_eq, l_eq]
-
-theorem concat_congr {k k' l l' : Lang α} : k ≐ k' → l ≐ l' → k ⊙ l ≐ k' ⊙ l' := by
-  intro k_eq l_eq t
-  rw [concat, concat]
-  apply Iff.intro
-  . intro ⟨m₁, m₂, mt_eq, k_m, l_m⟩
-    exists m₁, m₂
-    simp [mt_eq, ←k_eq (behind t, m₁, m₂ ++ ahead t), ←l_eq (behind t ++ m₁, m₂, ahead t)]
-    exact ⟨k_m, l_m⟩
-
-  . intro ⟨m₁, m₂, mt_eq, k_m, l_m⟩
-    exists m₁, m₂
-    simp [mt_eq, k_eq (behind t, m₁, m₂ ++ ahead t), l_eq (behind t ++ m₁, m₂, ahead t)]
-    exact ⟨k_m, l_m⟩
-
-theorem intersection_congr {k k' l l' : Lang α} : k ≐ k' → l ≐ l' → k ∩ l ≐ k' ∩ l' := by
-  intro k_eq l_eq t
-  rw [intersection, intersection]
-  rw [k_eq, l_eq]
-
-theorem diff_congr {k k' l l' : Lang α} : k ≐ k' → l ≐ l' → k \ l ≐ k' \ l' := by
-  intro k_eq l_eq t
-  rw [diff, diff]
-  rw [k_eq, l_eq]
-
-
-theorem kstar_congr' {α} {l l' : Lang α} (l_eq : l ≐ l') (t : Triple α)
-                     : StarLFP l t ↔ StarLFP l' t := by
-  apply Iff.intro
-  . intro kl_mem
-    induction kl_mem with
-    | base h => exact .base h
-    | @step lb m₁ m₂ la m eq l_mem ls_mem ih =>
-        apply StarLFP.step eq
-        . rw [←l_eq]
-          exact l_mem
-        . exact ih
-
-  . intro kl_mem
-    induction kl_mem with
-    | base h => exact .base h
-    | @step lb m₁ m₂ la m eq l_mem ls_mem ih =>
-        apply StarLFP.step eq
-        . rw [l_eq]
-          exact l_mem
-        . exact ih
-
-theorem kstar_congr {l l' : Lang α} : l ≐ l' → l⋆ ≐ l'⋆ := by
-  intro eq t
-  rw [kstar, kstar]
-  exact kstar_congr' eq t
-
-
-
-theorem lookbehind_congr {l l' : Lang α} : l ≐ l' → ◁ l ≐ ◁ l' := by
-  intro l_eq t
-  rw [lookbehind, lookbehind]
-  rw [l_eq]
-
-theorem lookahead_congr {l l' : Lang α} : l ≐ l' → ▷ l ≐ ▷ l' := by
-  intro l_eq t
-  rw [lookahead, lookahead]
-  rw [l_eq]
-
-
--------------------------------------------------------------------------
-
-theorem union_assoc : ∀ {l₁ l₂ l₃ : Lang α}, l₁ ∪ (l₂ ∪ l₃) ≐ (l₁ ∪ l₂) ∪ l₃ := by
-  intro l₁ l₂ l₃ t
+theorem union_assoc : ∀ {l₁ l₂ l₃ : Lang α}, l₁ ∪ (l₂ ∪ l₃) = (l₁ ∪ l₂) ∪ l₃ := by
+  intro l₁ l₂ l₃
+  ext t
   simp [union, or_assoc]
 
-theorem union_comm : ∀ {k l : Lang α}, k ∪ l ≐ l ∪ k := by
-  intro k l t
+theorem union_comm : ∀ {k l : Lang α}, k ∪ l = l ∪ k := by
+  intro k l
+  ext t
   simp [union, or_comm]
 
-theorem union_idem : ∀ {l : Lang α}, l ∪ l ≐ l := by
-  intro l t
+theorem union_idem : ∀ {l : Lang α}, l ∪ l = l := by
+  intro l
+  ext t
   simp [union]
 
 
-theorem union_identity_l : ∀ {l : Lang α}, ∅ ∪ l ≐ l := by
-  intro l t
+theorem union_identity_l : ∀ {l : Lang α}, ∅ ∪ l = l := by
+  intro l
+  ext t
   simp [union, empty]
 
-theorem union_identity_r : ∀ {l : Lang α}, l ∪ ∅ ≐ l := by
-  intro l t
+theorem union_identity_r : ∀ {l : Lang α}, l ∪ ∅ = l := by
+  intro l
   rw [union_comm, union_identity_l]
 
 -----------------------------------------------------------------------
 
-theorem concat_assoc : ∀ {k l m : Lang α}, k ⊙ (l ⊙ m) ≐ (k ⊙ l) ⊙ m := by
-  intro k l m t
+theorem concat_assoc : ∀ {k l m : Lang α}, k ⊙ (l ⊙ m) = (k ⊙ l) ⊙ m := by
+  intro k l m
+  ext t
   apply Iff.intro
   . intro ⟨x, y, mt_eq, k_m, lm_m⟩
     have ⟨z, w, mt_eq', l_m, m_m⟩ := lm_m
@@ -135,16 +53,19 @@ theorem concat_assoc : ∀ {k l m : Lang α}, k ⊙ (l ⊙ m) ≐ (k ⊙ l) ⊙ 
     exact ⟨l_m, m_m⟩
 
 
-theorem concat_zero_l : ∀ {l : Lang α}, ∅ ⊙ l ≐ ∅ := by
-  intro l t
+theorem concat_zero_l : ∀ {l : Lang α}, ∅ ⊙ l = ∅ := by
+  intro l
+  ext t
   simp [concat, empty]
 
-theorem concat_zero_r : ∀ {l : Lang α}, l ⊙ ∅ ≐ ∅ := by
-  intro l t
+theorem concat_zero_r : ∀ {l : Lang α}, l ⊙ ∅ = ∅ := by
+  intro l
+  ext t
   simp [concat, empty]
 
-theorem concat_unit_l : ∀ {l : Lang α}, 𝟙 ⊙ l ≐ l := by
-  intro l t
+theorem concat_unit_l : ∀ {l : Lang α}, 𝟙 ⊙ l = l := by
+  intro l
+  ext t
   simp [concat, unit]
   apply Iff.intro
   . intro ⟨m₁, m₂, eq₁, eq₂, mem⟩
@@ -160,8 +81,9 @@ theorem concat_unit_l : ∀ {l : Lang α}, 𝟙 ⊙ l ≐ l := by
     simp
     exact mem
 
-theorem concat_unit_r : ∀ {l : Lang α}, l ⊙ 𝟙 ≐ l := by
-  intro l t
+theorem concat_unit_r : ∀ {l : Lang α}, l ⊙ 𝟙 = l := by
+  intro l
+  ext t
   simp [concat, unit]
   apply Iff.intro
   . intro ⟨m₁, m₂, eq₁, mem, eq₂⟩
@@ -176,8 +98,9 @@ theorem concat_unit_r : ∀ {l : Lang α}, l ⊙ 𝟙 ≐ l := by
     simp
     exact mem
 
-theorem concat_unit_l_der : ∀ {a : α} {l : Lang α}, ◁ 𝟙 ⊙ (der a l) ≐ der a l := by
-  intro a l t
+theorem concat_unit_l_der : ∀ {a : α} {l : Lang α}, ◁ 𝟙 ⊙ (der a l) = der a l := by
+  intro a l
+  ext t
   simp [concat, lookbehind, unit]
   apply Iff.intro
   . intro ⟨m₁, m₂, eq₁, ⟨eq₂, eq₃⟩, mem⟩
@@ -196,8 +119,9 @@ theorem concat_unit_l_der : ∀ {a : α} {l : Lang α}, ◁ 𝟙 ⊙ (der a l) �
     simp
     exact ⟨der_mem' mem, mem⟩
 
-theorem concat_unit_l_derLAhd : ∀ {a : α} {l : Lang α}, ◁ 𝟙 ⊙ (derLAhd a l) ≐ derLAhd a l := by
-  intro a l t
+theorem concat_unit_l_derLAhd : ∀ {a : α} {l : Lang α}, ◁ 𝟙 ⊙ (derLAhd a l) = derLAhd a l := by
+  intro a l
+  ext t
   simp [concat, lookbehind, unit]
   apply Iff.intro
   . intro ⟨m₁, m₂, eq₁, ⟨eq₂, eq₃⟩, mem⟩
@@ -218,8 +142,9 @@ theorem concat_unit_l_derLAhd : ∀ {a : α} {l : Lang α}, ◁ 𝟙 ⊙ (derLAh
 
 
 theorem concat_subeps_inter {α} : ∀ {k l : Lang α},
-                                    k ⊆ 𝟙 → l ⊆ 𝟙 → k ⊙ l ≐ k ∩ l := by
-  intro k l k_sub l_sub t
+                                    k ⊆ 𝟙 → l ⊆ 𝟙 → k ⊙ l = k ∩ l := by
+  intro k l k_sub l_sub
+  ext t
   apply Iff.intro
   . intro ⟨m₁, m₂, mt_eq, k_m, l_m⟩
     have m₁_eq : m₁ = [] := k_sub k_m
@@ -241,52 +166,60 @@ theorem concat_subeps_inter {α} : ∀ {k l : Lang α},
 
 -------------------------------------------------------------------------
 
-theorem inter_assoc : ∀ {l₁ l₂ l₃ : Lang α}, l₁ ∩ (l₂ ∩ l₃) ≐ (l₁ ∩ l₂) ∩ l₃ := by
-  intro l₁ l₂ l₃ t
+theorem inter_assoc : ∀ {l₁ l₂ l₃ : Lang α}, l₁ ∩ (l₂ ∩ l₃) = (l₁ ∩ l₂) ∩ l₃ := by
+  intro l₁ l₂ l₃
+  ext t
   simp [intersection, and_assoc]
 
-theorem inter_comm : ∀ {k l : Lang α}, k ∩ l ≐ l ∩ k := by
-  intro k l t
+theorem inter_comm : ∀ {k l : Lang α}, k ∩ l = l ∩ k := by
+  intro k l
+  ext t
   simp [intersection, and_comm]
 
-theorem inter_idem : ∀ {l : Lang α}, l ≐ l ∩ l := by
-  intro l t
+theorem inter_idem : ∀ {l : Lang α}, l ∩ l = l := by
+  intro l
+  ext t
   simp [intersection]
 
 
-theorem inter_zero_l : ∀ {l : Lang α}, ∅ ∩ l ≐ ∅ := by
-  intro l t
+theorem inter_zero_l : ∀ {l : Lang α}, ∅ ∩ l = ∅ := by
+  intro l
+  ext t
   simp [intersection, empty]
 
-theorem inter_zero_r : ∀ {l : Lang α}, l ∩ ∅ ≐ ∅ := by
-  intro l t
+theorem inter_zero_r : ∀ {l : Lang α}, l ∩ ∅ = ∅ := by
+  intro l
   rw [inter_comm, inter_zero_l]
 
-theorem inter_top_l : ∀ {l : Lang α}, 𝕋 ∩ l ≐ l := by
-  intro l t
+theorem inter_top_l : ∀ {l : Lang α}, 𝕋 ∩ l = l := by
+  intro l
+  ext t
   simp [intersection, top]
 
-theorem inter_top_r : ∀ {l : Lang α}, l ∩ 𝕋 ≐ l := by
-  intro l t
+theorem inter_top_r : ∀ {l : Lang α}, l ∩ 𝕋 = l := by
+  intro l
   rw [inter_comm, inter_top_l]
 
 
 theorem union_over_inter : ∀ {k l m : Lang α},
-                                 k ∪ (l ∩ m) ≐ (k ∪ l) ∩ (k ∪ m) := by
-  intro k l m t
+                                 k ∪ (l ∩ m) = (k ∪ l) ∩ (k ∪ m) := by
+  intro k l m
+  ext t
   rw [union, intersection, intersection, union, union]
   rw [or_and_left]
 
 theorem inter_over_union : ∀ {k l m : Lang α},
-                                 k ∩ (l ∪ m) ≐ (k ∩ l) ∪ (k ∩ m) := by
-  intro k l m t
+                                 k ∩ (l ∪ m) = (k ∩ l) ∪ (k ∩ m) := by
+  intro k l m
+  ext t
   rw [union, intersection, intersection, union, intersection]
   rw [and_or_left]
 
 
 theorem union_absorb : ∀ {k l : Lang α},
-                         k ∪ (k ∩ l) ≐ k := by
-  intro k l t
+                         k ∪ (k ∩ l) = k := by
+  intro k l
+  ext t
   rw [union, intersection]
   calc k t ∨ k t ∧ l t
     _ ↔ k t ∧ True ∨ k t ∧ l t := by rw [and_true]
@@ -294,8 +227,9 @@ theorem union_absorb : ∀ {k l : Lang α},
     _ ↔ k t := by simp
 
 theorem inter_absorb : ∀ {k l : Lang α},
-                         k ∩ (k ∪ l) ≐ k := by
-  intro k l t
+                         k ∩ (k ∪ l) = k := by
+  intro k l
+  ext t
   rw [intersection, union]
   calc k t ∧ (k t ∨ l t)
     _ ↔ (k t ∨ False) ∧ (k t ∨ l t)  := by rw [or_false]
@@ -305,22 +239,26 @@ theorem inter_absorb : ∀ {k l : Lang α},
 
 ---------------------------------------------------------------------------
 
-theorem diff_zero_l : ∀ {l : Lang α}, ∅ \ l ≐ ∅ := by
-  intro l t
+theorem diff_zero_l : ∀ {l : Lang α}, ∅ \ l = ∅ := by
+  intro l
+  ext t
   simp [diff, empty]
 
-theorem diff_top_r : ∀ {l : Lang α}, l \ 𝕋 ≐ ∅ := by
-  intro l t
+theorem diff_top_r : ∀ {l : Lang α}, l \ 𝕋 = ∅ := by
+  intro l
+  ext t
   simp [diff, top, empty]
 
-theorem union_compl : ∀ {l : Lang α}, l ∪ (𝕋 \ l) ≐ 𝕋 := by
-  intro l t
+theorem union_compl : ∀ {l : Lang α}, l ∪ (𝕋 \ l) = 𝕋 := by
+  intro l
+  ext t
   simp [union, diff, top]
   open Classical in
   apply em
 
-theorem inter_compl : ∀ {l : Lang α}, l ∩ (𝕋 \ l) ≐ ∅ := by
-  intro l t
+theorem inter_compl : ∀ {l : Lang α}, l ∩ (𝕋 \ l) = ∅ := by
+  intro l
+  ext t
   rw [intersection, empty, diff, top]
   simp
 
@@ -333,8 +271,8 @@ theorem lbhd_subeps : ∀ {l : Lang α}, ◁ l ⊆ 𝟙 := by
   exact mem.1
 
 
-theorem lbhd_unit_lahd {α} : @LEq α (◁ 𝟙) (▷ (◁ 𝟙 ⊙ 𝕋)) := by
-  intro t
+theorem lbhd_unit_lahd {α} : (◁ 𝟙 : Lang α) = ▷ (◁ 𝟙 ⊙ 𝕋) := by
+  ext t
   rw [lookbehind, unit, mtch, lookahead]
   apply Iff.intro
   . intro ⟨mt_eq, bt_eq⟩
@@ -348,21 +286,24 @@ theorem lbhd_unit_lahd {α} : @LEq α (◁ 𝟙) (▷ (◁ 𝟙 ⊙ 𝕋)) := by
     exact ⟨mt_eq, m.2⟩
 
 
-theorem lbhd_zero {α} : @LEq α (◁ ∅) ∅ := by
-  intro t
+theorem lbhd_zero {α} : (◁ ∅ : Lang α) = ∅ := by
+  ext t
   simp [lookbehind, empty]
 
-theorem lbhd_inter : ∀ {k l : Lang α}, ◁ k ∩ ◁ l ≐ ◁ (k ∩ l) := by
-  intro k l t
+theorem lbhd_inter : ∀ {k l : Lang α}, ◁ k ∩ ◁ l = ◁ (k ∩ l) := by
+  intro k l
+  ext t
   simp [lookbehind, intersection]
   ac_nf
 
-theorem lbhd_union : ∀ {k l : Lang α}, ◁ k ∪ ◁ l ≐ ◁ (k ∪ l) := by
-  intro k l t
+theorem lbhd_union : ∀ {k l : Lang α}, ◁ k ∪ ◁ l = ◁ (k ∪ l) := by
+  intro k l
+  ext t
   simp [lookbehind, union, and_or_left]
 
-theorem lbhd_diff : ∀ {k l : Lang α}, ◁ k \ ◁ l ≐ ◁ (k \ l) := by
-  intro k l t
+theorem lbhd_diff : ∀ {k l : Lang α}, ◁ k \ ◁ l = ◁ (k \ l) := by
+  intro k l
+  ext t
   apply Iff.intro
   . intro ⟨⟨mt_eq, k_m⟩, nl_m⟩
     exact ⟨mt_eq, k_m, λ l_m => nl_m ⟨mt_eq, l_m⟩⟩
@@ -376,12 +317,12 @@ theorem lahd_subeps : ∀ {l : Lang α}, ▷ l ⊆ 𝟙 := by
   exact mem.1
 
 
-theorem lahd_zero {α} : @LEq α (▷ ∅) ∅ := by
-  intro t
+theorem lahd_zero {α} : (▷ ∅ : Lang α) = ∅ := by
+  ext t
   simp [lookahead, empty]
 
-theorem lahd_unit_lbhd : @LEq α (▷ 𝟙) (◁ (𝕋 ⊙ ▷ 𝟙)) := by
-  intro t
+theorem lahd_unit_lbhd : (▷ 𝟙 : Lang α) = ◁ (𝕋 ⊙ ▷ 𝟙) := by
+  ext t
   rw [lookahead, unit, mtch, lookbehind]
   apply Iff.intro
   . intro ⟨mt_eq, at_eq⟩
@@ -396,17 +337,20 @@ theorem lahd_unit_lbhd : @LEq α (▷ 𝟙) (◁ (𝕋 ⊙ ▷ 𝟙)) := by
     exact ⟨mt_eq, m.2⟩
 
 
-theorem lahd_inter : ∀ {k l : Lang α}, ▷ k ∩ ▷ l ≐ ▷ (k ∩ l) := by
-  intro k l t
+theorem lahd_inter : ∀ {k l : Lang α}, ▷ k ∩ ▷ l = ▷ (k ∩ l) := by
+  intro k l
+  ext t
   simp [lookahead, intersection]
   ac_nf
 
-theorem lahd_union : ∀ {k l : Lang α}, ▷ k ∪ ▷ l ≐ ▷ (k ∪ l) := by
-  intro k l t
+theorem lahd_union : ∀ {k l : Lang α}, ▷ k ∪ ▷ l = ▷ (k ∪ l) := by
+  intro k l
+  ext t
   simp [lookahead, union, and_or_left]
 
-theorem lahd_diff : ∀ {k l : Lang α}, ▷ k \ ▷ l ≐ ▷ (k \ l) := by
-  intro k l t
+theorem lahd_diff : ∀ {k l : Lang α}, ▷ k \ ▷ l = ▷ (k \ l) := by
+  intro k l
+  ext t
   apply Iff.intro
   . intro ⟨⟨mt_eq, k_m⟩, nl_m⟩
     exact ⟨mt_eq, k_m, λ l_m => nl_m ⟨mt_eq, l_m⟩⟩
@@ -415,19 +359,21 @@ theorem lahd_diff : ∀ {k l : Lang α}, ▷ k \ ▷ l ≐ ▷ (k \ l) := by
 
 
 theorem lahd_concat_assoc : ∀ {l₁ l₂ l₃ : Lang α},
-                                ▷ l₁ ⊙ (▷ l₂ ⊙ l₃) ≐ (▷ l₁ ⊙ ▷ l₂) ⊙ l₃ := by
-  intro l₁ l₂ l₃ t
+                                ▷ l₁ ⊙ (▷ l₂ ⊙ l₃) = (▷ l₁ ⊙ ▷ l₂) ⊙ l₃ := by
+  intro l₁ l₂ l₃
+  ext t
   rw [concat_assoc]
 
-theorem lahd_concat_inter {α} : ∀ {k l : Lang α}, ▷ k ⊙ ▷ l ≐ ▷ k ∩ ▷ l := by
+theorem lahd_concat_inter {α} : ∀ {k l : Lang α}, ▷ k ⊙ ▷ l = ▷ k ∩ ▷ l := by
   intro k l
   exact concat_subeps_inter lahd_subeps lahd_subeps
 
 
 --------------------------------------------------------------------------
 
-theorem concat_distr_union_l : ∀ {k l₁ l₂ : Lang α}, k ⊙ (l₁ ∪ l₂) ≐ (k ⊙ l₁) ∪ (k ⊙ l₂) := by
-  intro k l₁ l₂ t
+theorem concat_distr_union_l : ∀ {k l₁ l₂ : Lang α}, k ⊙ (l₁ ∪ l₂) = (k ⊙ l₁) ∪ (k ⊙ l₂) := by
+  intro k l₁ l₂
+  ext t
   apply Iff.intro
   . intro ⟨m₁, m₂, eq, k_mem, l_mem⟩
     rw [union] at l_mem
@@ -453,8 +399,9 @@ theorem concat_distr_union_l : ∀ {k l₁ l₂ : Lang α}, k ⊙ (l₁ ∪ l₂
       simp [eq, k_mem, l₂_mem]
 
 
-theorem concat_distr_union_r : ∀ {k l m : Lang α}, (k ∪ l) ⊙ m ≐ (k ⊙ m) ∪ (l ⊙ m) := by
-  intro k l m t
+theorem concat_distr_union_r : ∀ {k l m : Lang α}, (k ∪ l) ⊙ m = (k ⊙ m) ∪ (l ⊙ m) := by
+  intro k l m
+  ext t
   apply Iff.intro
   . intro ⟨x, y, mt_eq, kl_m, m_m⟩
     rw [union] at *
@@ -504,8 +451,7 @@ theorem kstar_iter_equiv {α} (l : Lang α) {t : Triple α} : l⋆ t ↔ ∃ n, 
             (λ ⟨_, i_m⟩ => iterR_kstar i_m)
 
 
-theorem iterR_succ {α} (n : Nat) (l : Lang α) : iterR n l ⊙ l ≐ iterR (n + 1) l := by
-  intro t
+theorem iterR_succ {α} (n : Nat) (l : Lang α) : iterR n l ⊙ l = iterR (n + 1) l := by
   match n with
   | .zero =>
       rw [iterR, iterR, iterR]
@@ -514,23 +460,17 @@ theorem iterR_succ {α} (n : Nat) (l : Lang α) : iterR n l ⊙ l ≐ iterR (n +
   | .succ n =>
       rw [iterR, iterR]
       rw [←concat_assoc]
-      apply Iff.intro
-      . intro ⟨y₁, y₂, eq, l_m, mem⟩
-        rw [iterR_succ n l] at mem
-        exists y₁, y₂
-      . intro ⟨y₁, y₂, eq, l_m, i_m⟩
-        rw [←iterR_succ n l] at i_m
-        exists y₁, y₂
+      rw [iterR_succ n l]
 
 
-theorem iterR_succ' {α} (n : Nat) (l : Lang α) : iterR (n + 1) l ≐ l ⊙ iterR n l := by
-  intro t
+theorem iterR_succ' {α} (n : Nat) (l : Lang α) : iterR (n + 1) l = l ⊙ iterR n l := by
   rw [iterR]
 
 
 
-theorem kstar_concat_lem : ∀ {l : Lang α}, l ⊙ l⋆ ≐ l⋆ ⊙ l := by
-  intro l t
+theorem kstar_concat_lem : ∀ {l : Lang α}, l ⊙ l⋆ = l⋆ ⊙ l := by
+  intro l
+  ext t
   apply Iff.intro
   . intro ⟨y₁, y₂, eq, l_m, ls_m⟩
     have ⟨n, i_m⟩ := (kstar_iter_equiv l).mp ls_m
@@ -551,8 +491,9 @@ theorem kstar_concat_lem : ∀ {l : Lang α}, l ⊙ l⋆ ≐ l⋆ ⊙ l := by
 
 
 
-theorem kstar_expand : ∀ {l : Lang α}, l⋆ ≐ 𝟙 ∪ l ⊙ l⋆ := by
-  intro l t
+theorem kstar_expand : ∀ {l : Lang α}, l⋆ = 𝟙 ∪ l ⊙ l⋆ := by
+  intro l
+  ext t
   rw [kstar, union]
   apply Iff.intro
   . intro kl_mem
@@ -570,18 +511,16 @@ theorem kstar_expand : ∀ {l : Lang α}, l⋆ ≐ 𝟙 ∪ l ⊙ l⋆ := by
     . intro ⟨m₁, m₂, eq, l_mem, k_mem⟩
       exact .step eq l_mem k_mem
 
-theorem kstar_expand' : ∀ {l : Lang α}, l⋆ ≐ 𝟙 ∪ l⋆ ⊙ l := by
-  intro l t
-  rw [kstar_expand]
-  rw [union]
-  rw [kstar_concat_lem]
-  rw [←union]
+theorem kstar_expand' : ∀ {l : Lang α}, l⋆ = 𝟙 ∪ l⋆ ⊙ l := by
+  intro l
+  rw [←kstar_concat_lem]
+  exact kstar_expand
 
 
-theorem subset_union_lemma {k l : Lang α} : k ⊆ l ↔ k ∪ l ≐ l := by
+theorem subset_union_lemma {k l : Lang α} : k ⊆ l ↔ k ∪ l = l := by
   apply Iff.intro
   . intro ss
-    intro t
+    ext t
     rw [union]
     simp
     exact ss
@@ -671,8 +610,9 @@ theorem kstar_lfp' : ∀ {a b x : Lang α}, b ∪ x ⊙ a ⊆ x → b ⊙ a⋆ �
 
 -------------------------------------------------------------------------------
 
-theorem pla_from_lookahead : ∀ (l : Lang α), ▷ (l ⊙ 𝕋) ≐ pla l := by
-  intro l t
+theorem pla_from_lookahead : ∀ (l : Lang α), ▷ (l ⊙ 𝕋) = pla l := by
+  intro l
+  ext t
   rw [lookahead, pla]
   apply Iff.intro
   . intro ⟨mt_eq, y, z, at_eq, l_m, _⟩
@@ -688,8 +628,9 @@ theorem pla_from_lookahead : ∀ (l : Lang α), ▷ (l ⊙ 𝕋) ≐ pla l := by
     simp [at_eq, l_m]
 
 
-theorem slb_from_lookbehind : ∀ (l : Lang α), ◁ (𝕋 ⊙ l) ≐ slb l := by
-  intro l t
+theorem slb_from_lookbehind : ∀ (l : Lang α), ◁ (𝕋 ⊙ l) = slb l := by
+  intro l
+  ext t
   rw [lookbehind, slb]
   apply Iff.intro
   . intro ⟨mt_eq, x, y, bt_eq, _, l_m⟩

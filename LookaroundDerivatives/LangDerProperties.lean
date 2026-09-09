@@ -3,18 +3,21 @@ import LookaroundDerivatives.LangOpProperties
 
 
 theorem derLBhd_after_der {l : Lang α}
-                          : ∀ (a b : α), derLBhd b (der a l) ≐ ∅ := by
-  intro a b t
+                          : ∀ (a b : α), derLBhd b (der a l) = ∅ := by
+  intro a b
+  ext t
   simp [derLBhd, der, behind, empty]
 
 theorem derLBhd_after_derLAhd {l : Lang α}
-                              : ∀ (a b : α), derLBhd b (derLAhd a l) ≐ ∅ := by
-  intro a b t
+                              : ∀ (a b : α), derLBhd b (derLAhd a l) = ∅ := by
+  intro a b
+  ext t
   simp [derLBhd, derLAhd, behind, empty]
 
 theorem der_after_derLAhd {l : Lang α}
-                          : ∀ (a b : α), der b (derLAhd a l) ≐ ∅ := by
-  intro a b t
+                          : ∀ (a b : α), der b (derLAhd a l) = ∅ := by
+  intro a b
+  ext t
   simp [der, derLAhd, mtch, empty]
 
 
@@ -59,98 +62,26 @@ theorem nlbl_lookahead {l : Lang α} : nlbl (▷ l) ↔ nlbl l := by
 
 ---------------------------------------------------------
 
-theorem nlbl_congr {l l' : Lang α} (eq : l ≐ l') : nlbl l ↔ nlbl l' := by
-  rw [nlbl, nlbl]
-  rw [eq]
-
-
-theorem derLBhd_congr {l l' : Lang α} (eq : l ≐ l') : ∀ (a : α), derLBhd a l ≐ derLBhd a l' := by
-  intro a t
-  rw [derLBhd, derLBhd]
-  rw [eq]
-
-theorem wderLBhd_congr {l l' : Lang α} (eq : l ≐ l') : ∀ w, wderLBhd w l ≐ wderLBhd w l' := by
-  intro w t
-  match w with
-  | [] => rw [wderLBhd, wderLBhd, eq]
-  | a :: w =>
-      rw [wderLBhd, wderLBhd]
-      rw [wderLBhd_congr (derLBhd_congr eq a)]
-
-
-theorem der_congr {l l' : Lang α} (eq : l ≐ l') : ∀ a, der a l ≐ der a l' := by
-  intro a t
-  rw [der, der]
-  rw [eq]
-
-theorem wder_congr {l l' : Lang α} (eq : l ≐ l') : ∀ w, wder w l ≐ wder w l' := by
-  intro w t
-  match w with
-  | [] => rw [wder, wder, eq]
-  | a :: w =>
-      rw [wder, wder]
-      rw [wder_congr (der_congr eq a)]
-
-
-theorem derLAhd_congr {l l' : Lang α} (eq : l ≐ l') : ∀ a, derLAhd a l ≐ derLAhd a l' := by
-  intro a t
-  rw [derLAhd, derLAhd]
-  rw [eq]
-
-theorem wderLAhd_congr {l l' : Lang α} (eq : l ≐ l') : ∀ w, wderLAhd w l ≐ wderLAhd w l' := by
-  intro w t
-  match w with
-  | [] => rw [wderLAhd, wderLAhd, eq]
-  | a :: w =>
-      rw [wderLAhd, wderLAhd]
-      rw [wderLAhd_congr (derLAhd_congr eq a)]
-
-
-
-
-theorem tder_congr {l l' : Lang α} (eq : l ≐ l') : ∀ (t : Triple α), tder t l ≐ tder t l' := by
-  intro ⟨x, y, z⟩  u
-  rw [tder, tder]
-  simp [behind, mtch, ahead]
-  rw [wderLAhd_congr (wder_congr (wderLBhd_congr eq x) y) z]
-
-
-theorem xder_congr {l l' : Lang α} (eq : l ≐ l') : ∀ a, xder a l ≐ xder a l' := by
-  intro a t
-  rw [xder, xder]
-  rw [union_congr (derLBhd_congr eq a)
-                  (union_congr (der_congr eq a) (derLAhd_congr eq a))]
-
-
-theorem wxder_congr {l l' : Lang α} (eq : l ≐ l') : ∀ w, wxder w l ≐ wxder w l' := by
-  intro w t
-  match w with
-  | [] => rw [wxder, wxder, eq]
-  | a :: w => rw [wxder, wxder]
-              rw [wxder_congr (xder_congr eq a) w]
-
-
-
----------------------------------------------------------
 -- derivatives of `$ b`
 
 theorem derLBhd_symb {α} (b : α) : ∀ (a : α),
-    derLBhd a ($ b) ≐ $ b := by
-  intro a t
+    derLBhd a ($ b) = $ b := by
+  intro a
+  ext t
   rw [derLBhd, symb, mtch, symb]
 
 theorem der_symb {α} [DecidableEq α] (b : α) : ∀ (a : α),
-    der a ($ b) ≐ if a = b then ◁ 𝟙 else ∅ := by
+    der a ($ b) = if a = b then ◁ 𝟙 else ∅ := by
   intro a
   if h : a = b then
     simp [h]
-    intro t
+    ext t
     rw [der, symb, mtch]
     rw[lookbehind, unit, mtch]
     simp [and_comm]
   else
     simp [h]
-    intro t
+    ext t
     rw [der, symb, mtch]
     rw [empty]
     apply Iff.intro
@@ -161,8 +92,9 @@ theorem der_symb {α} [DecidableEq α] (b : α) : ∀ (a : α),
     . intro bot; contradiction
 
 theorem derLAhd_symb {α} (b : α) : ∀ (a : α),
-    derLAhd a ($ b) ≐ ∅ := by
-  intro a t
+    derLAhd a ($ b) = ∅ := by
+  intro a
+  ext t
   rw [derLAhd, symb, mtch, empty]
   simp
 
@@ -170,17 +102,20 @@ theorem derLAhd_symb {α} (b : α) : ∀ (a : α),
 ------------------------------------------------------------
 -- derivatives of `∅`
 
-theorem derLBhd_empty : ∀ (a : α), derLBhd a ∅ ≐ ∅ := by
-  intro a t
+theorem derLBhd_empty : ∀ (a : α), derLBhd a ∅ = ∅ := by
+  intro a
+  ext t
   rw [derLBhd, empty, empty]
 
-theorem der_empty : ∀ (a : α), der a ∅ ≐ ∅ := by
-  intro a t
+theorem der_empty : ∀ (a : α), der a ∅ = ∅ := by
+  intro a
+  ext t
   rw [der, empty, empty]
   simp
 
-theorem derLAhd_empty : ∀ (a : α), derLAhd a ∅ ≐ ∅ := by
-  intro a t
+theorem derLAhd_empty : ∀ (a : α), derLAhd a ∅ = ∅ := by
+  intro a
+  ext t
   rw [derLAhd, empty, empty]
   simp
 
@@ -189,20 +124,23 @@ theorem derLAhd_empty : ∀ (a : α), derLAhd a ∅ ≐ ∅ := by
 -- derivatives of `k ∪ l`
 
 theorem derLBhd_union {k l : Lang α} : ∀ (a : α),
-    derLBhd a (k ∪ l) ≐ derLBhd a k ∪ derLBhd a l := by
-  intro a t
+    derLBhd a (k ∪ l) = derLBhd a k ∪ derLBhd a l := by
+  intro a
+  ext t
   rw [derLBhd, union, union, derLBhd, derLBhd]
 
 theorem der_union {k l : Lang α} : ∀ (a : α),
-    der a (k ∪ l) ≐ der a k ∪ der a l := by
-  intro a t
+    der a (k ∪ l) = der a k ∪ der a l := by
+  intro a
+  ext t
   rw [der, union, union, der, der]
   rw [and_or_left]
 
 
 theorem derLAhd_union {k l : Lang α} : ∀ (a : α),
-    derLAhd a (k ∪ l) ≐ derLAhd a k ∪ derLAhd a l := by
-  intro a t
+    derLAhd a (k ∪ l) = derLAhd a k ∪ derLAhd a l := by
+  intro a
+  ext t
   rw [derLAhd, union, union, derLAhd, derLAhd]
   rw [and_or_left, and_or_left]
 
@@ -210,18 +148,21 @@ theorem derLAhd_union {k l : Lang α} : ∀ (a : α),
 ------------------------------------------------------------
 -- derivatives of `𝟙`
 
-theorem derLBhd_unit : ∀ (a : α), derLBhd a 𝟙 ≐ 𝟙 := by
-  intro a t
+theorem derLBhd_unit : ∀ (a : α), derLBhd a 𝟙 = 𝟙 := by
+  intro a
+  ext t
   rw [derLBhd, unit, mtch, unit]
 
-theorem der_unit : ∀ (a : α), der a 𝟙 ≐ ∅ := by
-  intro a t
+theorem der_unit : ∀ (a : α), der a 𝟙 = ∅ := by
+  intro a
+  ext t
   rw [der, unit, mtch]
   rw [empty]
   simp
 
-theorem derLAhd_unit : ∀ (a : α), derLAhd a 𝟙 ≐ ◁ 𝟙 := by
-  intro a t
+theorem derLAhd_unit : ∀ (a : α), derLAhd a 𝟙 = ◁ 𝟙 := by
+  intro a
+  ext t
   rw [derLAhd, unit, mtch, lookbehind, unit, mtch]
   simp [and_comm]
 
@@ -230,8 +171,9 @@ theorem derLAhd_unit : ∀ (a : α), derLAhd a 𝟙 ≐ ◁ 𝟙 := by
 -- derivatives of `k ⊙ l`
 
 theorem derLBhd_concat {k l : Lang α} : ∀ (a : α),
-    derLBhd a (k ⊙ l) ≐ derLBhd a k ⊙ derLBhd a l := by
-  intro a t
+    derLBhd a (k ⊙ l) = derLBhd a k ⊙ derLBhd a l := by
+  intro a
+  ext t
   rw [derLBhd, concat, concat]
   rw [behind, mtch, ahead]
 
@@ -243,8 +185,9 @@ theorem derLBhd_concat {k l : Lang α} : ∀ (a : α),
     exists m₁, m₂
 
 theorem der_concat {k l : Lang α} : ∀ (a : α),
-    der a (k ⊙ l) ≐ (der a k ⊙ derLBhd a l) ∪ (derLAhd a k ⊙ der a l) := by
-  intro a t
+    der a (k ⊙ l) = (der a k ⊙ derLBhd a l) ∪ (derLAhd a k ⊙ der a l) := by
+  intro a
+  ext t
   apply Iff.intro
   . intro kl
     rw [der, concat] at kl
@@ -294,8 +237,9 @@ theorem der_concat {k l : Lang α} : ∀ (a : α),
 
 
 theorem derLAhd_concat {k l : Lang α} : ∀ (a : α),
-    derLAhd a (k ⊙ l) ≐ derLAhd a k ⊙ derLAhd a l := by
-  intro a t
+    derLAhd a (k ⊙ l) = derLAhd a k ⊙ derLAhd a l := by
+  intro a
+  ext t
   rw [derLAhd, concat, concat]
   rw [behind, mtch, ahead]
 
@@ -331,13 +275,15 @@ theorem derLAhd_concat {k l : Lang α} : ∀ (a : α),
 -- derivatives of `𝕋`
 
 theorem derLBhd_top : ∀ (a : α),
-    derLBhd a 𝕋 ≐ 𝕋 := by
-  intro a t
+    derLBhd a 𝕋 = 𝕋 := by
+  intro a
+  ext t
   rw [derLBhd, top, top]
 
 theorem der_top : ∀ (a : α),
-    der a 𝕋 ≐ (◁ 𝟙) ⊙ 𝕋 := by
-  intro a t
+    der a 𝕋 = (◁ 𝟙) ⊙ 𝕋 := by
+  intro a
+  ext t
   rw [der, top, concat]
   simp [top, lookbehind, unit]
   apply Iff.intro
@@ -348,8 +294,9 @@ theorem der_top : ∀ (a : α),
     exact mt_eq'
 
 theorem derLAhd_top : ∀ (a : α),
-    derLAhd a 𝕋 ≐ ◁ 𝟙 := by
-  intro a t
+    derLAhd a 𝕋 = ◁ 𝟙 := by
+  intro a
+  ext t
   rw [derLAhd, top, lookbehind, unit, mtch]
   simp [and_comm]
 
@@ -358,20 +305,23 @@ theorem derLAhd_top : ∀ (a : α),
 -- derivatives of `k ∩ l`
 
 theorem derLBhd_inter {k l : Lang α} : ∀ (a : α),
-    derLBhd a (k ∩ l) ≐ derLBhd a k ∩ derLBhd a l := by
-  intro a t
+    derLBhd a (k ∩ l) = derLBhd a k ∩ derLBhd a l := by
+  intro a
+  ext t
   rw [derLBhd, intersection, intersection, derLBhd, derLBhd]
 
 
 theorem der_inter {k l : Lang α} : ∀ (a : α),
-    der a (k ∩ l) ≐ der a k ∩ der a l := by
-  intro a t
+    der a (k ∩ l) = der a k ∩ der a l := by
+  intro a
+  ext t
   rw [der, intersection, intersection, der, der]
   rw [and_and_and_comm, and_self]
 
 theorem derLAhd_inter {k l : Lang α} : ∀ (a : α),
-    derLAhd a (k ∩ l) ≐ derLAhd a k ∩ derLAhd a l := by
-  intro a t
+    derLAhd a (k ∩ l) = derLAhd a k ∩ derLAhd a l := by
+  intro a
+  ext t
   rw [derLAhd, intersection, intersection, derLAhd, derLAhd]
   simp [and_and_and_comm, and_self]
 
@@ -380,14 +330,16 @@ theorem derLAhd_inter {k l : Lang α} : ∀ (a : α),
 -- derivatives of `k \ l`
 
 theorem derLBhd_diff {k l : Lang α} : ∀ (a : α),
-    derLBhd a (k \ l) ≐ derLBhd a k \ derLBhd a l := by
-  intro a t
+    derLBhd a (k \ l) = derLBhd a k \ derLBhd a l := by
+  intro a
+  ext t
   rw [derLBhd, diff, diff, derLBhd, derLBhd]
 
 
 theorem der_diff {k l : Lang α} : ∀ (a : α),
-    der a (k \ l) ≐ der a k \ der a l := by
-  intro a t
+    der a (k \ l) = der a k \ der a l := by
+  intro a
+  ext t
   rw [der, diff, diff, der, der]
   apply Iff.intro
   . intro ⟨bt, dk, dl⟩
@@ -399,8 +351,9 @@ theorem der_diff {k l : Lang α} : ∀ (a : α),
     exact ⟨bt, dk, dl⟩
 
 theorem derLAhd_diff {k l : Lang α} : ∀ (a : α),
-    derLAhd a (k \ l) ≐ derLAhd a k \ derLAhd a l := by
-  intro a t
+    derLAhd a (k \ l) = derLAhd a k \ derLAhd a l := by
+  intro a
+  ext t
   rw [derLAhd, diff, diff, derLAhd, derLAhd]
   simp
   apply Iff.intro
@@ -467,8 +420,8 @@ theorem derLBhd_StarLFP (a : α) (l : Lang α)(tr : Triple α)
 
 
 theorem derLBhd_kstar (a : α) (l : Lang α) :
-    derLBhd a l⋆ ≐ (derLBhd a l)⋆ := by
-  intro t
+    derLBhd a l⋆ = (derLBhd a l)⋆ := by
+  ext t
 
   have lem : StarLFP l (a :: behind t, mtch t, ahead t) ↔ StarLFP (derLBhd a l) t :=
     derLBhd_StarLFP a l t rfl
@@ -477,8 +430,9 @@ theorem derLBhd_kstar (a : α) (l : Lang α) :
   rw [lem]
 
 
-theorem derLAhd_kstar {l : Lang α} : ∀ (a : α), derLAhd a l⋆ ≐ ◁ 𝟙 := by
-  intro a t
+theorem derLAhd_kstar {l : Lang α} : ∀ (a : α), derLAhd a l⋆ = ◁ 𝟙 := by
+  intro a
+  ext t
   rw [derLAhd, lookbehind, unit, mtch]
 
   apply Iff.intro
@@ -551,8 +505,9 @@ theorem der_help' {α : Type}
 
 
 theorem der_kstar {l : Lang α} : ∀ (a : α),
-    der a l⋆ ≐ (der a l) ⊙ (derLBhd a l)⋆ := by
-  intro a t
+    der a l⋆ = (der a l) ⊙ (derLBhd a l)⋆ := by
+  intro a
+  ext t
   rw [kstar, der, kstar, concat]
   apply Iff.intro
   . intro ⟨bt_eq, p⟩
@@ -573,21 +528,24 @@ theorem der_kstar {l : Lang α} : ∀ (a : α),
 -- derivatives of lookbehinds `◁ l`
 
 theorem derLBhd_lookbehind {l : Lang α} : ∀ (a : α),
-    derLBhd a (◁ l) ≐ ◁ (der a l) := by
-  intro a t
+    derLBhd a (◁ l) = ◁ (der a l) := by
+  intro a
+  ext t
   rw [derLBhd, lookbehind, lookbehind, der]
   rw [behind, mtch, ahead, behind, mtch, ahead]
   simp
 
 theorem der_lookbehind {l : Lang α} : ∀ (a : α),
-    der a (◁ l) ≐ ∅ := by
-  intro a t
+    der a (◁ l) = ∅ := by
+  intro a
+  ext t
   rw [der, lookbehind, mtch, ahead, empty]
   simp
 
 theorem derLAhd_lookbehind {l : Lang α} : ∀ (a : α),
-    derLAhd a (◁ l) ≐ derLAhd a l := by
-  intro a t
+    derLAhd a (◁ l) = derLAhd a l := by
+  intro a
+  ext t
   rw [derLAhd, lookbehind, derLAhd, behind, mtch, ahead]
   simp
 
@@ -596,20 +554,23 @@ theorem derLAhd_lookbehind {l : Lang α} : ∀ (a : α),
 -- derivatives of lookaheads `▷ l`
 
 theorem derLBhd_lookahead {l : Lang α} : ∀ (a : α),
-    derLBhd a (▷ l) ≐ ▷ (derLBhd a l) := by
-  intro a t
+    derLBhd a (▷ l) = ▷ (derLBhd a l) := by
+  intro a
+  ext t
   rw [derLBhd, lookahead, lookahead, derLBhd]
   rw [behind, mtch, ahead, behind, mtch, ahead]
 
 theorem der_lookahead {l : Lang α} : ∀ (a : α),
-    der a (▷ l) ≐ ∅ := by
-  intro a t
+    der a (▷ l) = ∅ := by
+  intro a
+  ext t
   rw [der, lookahead, behind, mtch, ahead, empty]
   simp
 
 theorem derLAhd_lookahead {l : Lang α} : ∀ (a : α),
-    derLAhd a (▷ l) ≐ ▷ (der a l) := by
-  intro a t
+    derLAhd a (▷ l) = ▷ (der a l) := by
+  intro a
+  ext t
   rw [derLAhd, lookahead, lookahead, der]
   rw [behind, mtch, ahead, behind, mtch, ahead]
   simp [←and_assoc, and_comm]

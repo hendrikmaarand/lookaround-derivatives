@@ -32,23 +32,6 @@ structure KA (A : Type) where
 
 -------------------------------------------------------------------------
 
-theorem LEq_ext_iff : ∀ {k l : Lang α}, k = l ↔ k ≐ l  := by
-  intro k l
-  apply Iff.intro
-  . intro eq
-    rw [eq]
-    exact leq_refl
-  . intro eq
-    apply funext
-    intro t
-    rw [←iff_iff_eq]
-    exact eq t
-
-theorem LEq_ext : ∀ {k l : Lang α}, k ≐ l → k = l := by
-  intro k l
-  exact LEq_ext_iff.mpr
-
-
 -- The language operators form a Kleene algebra.
 def ka : KA (Lang α) :=
   { plus := union
@@ -59,40 +42,29 @@ def ka : KA (Lang α) :=
 
   , lt a b := union a b = b
 
-  , plus_assoc := LEq_ext union_assoc
-  , plus_comm  := LEq_ext union_comm
-  , plus_idem  := LEq_ext union_idem
-  , plus_zero  := LEq_ext union_identity_r
+  , plus_assoc := union_assoc
+  , plus_comm  := union_comm
+  , plus_idem  := union_idem
+  , plus_zero  := union_identity_r
 
-  , mult_assoc  := LEq_ext concat_assoc
-  , mult_one_l  := LEq_ext concat_unit_l
-  , mult_one_r  := LEq_ext concat_unit_r
-  , mult_zero_l := LEq_ext concat_zero_l
-  , mult_zero_r := LEq_ext concat_zero_r
+  , mult_assoc  := concat_assoc
+  , mult_one_l  := concat_unit_l
+  , mult_one_r  := concat_unit_r
+  , mult_zero_l := concat_zero_l
+  , mult_zero_r := concat_zero_r
 
-  , distr_l := LEq_ext concat_distr_union_l
-  , distr_r := LEq_ext concat_distr_union_r
+  , distr_l := concat_distr_union_l
+  , distr_r := concat_distr_union_r
 
   , star_pfp  := by intro a
-                    apply LEq_ext
-                    intro t
-                    rw [union, kstar_expand, union]
-                    simp
+                    show (𝟙 ∪ a ⊙ a⋆) ∪ a⋆ = a⋆
+                    rw [←kstar_expand]
+                    exact union_idem
   , star_pfp' := by intro a
-                    apply LEq_ext
-                    intro t
-                    rw [union, kstar_expand', union]
-                    simp
+                    show (𝟙 ∪ a⋆ ⊙ a) ∪ a⋆ = a⋆
+                    rw [←kstar_expand']
+                    exact union_idem
   , star_lfp  := by intro a b x eq
-                    apply LEq_ext
-                    rw [←subset_union_lemma]
-                    rw [LEq_ext_iff, ←subset_union_lemma] at eq
-                    intro t
-                    apply kstar_lfp eq
-
+                    exact subset_union_lemma.mp (kstar_lfp (subset_union_lemma.mpr eq))
   , star_lfp' := by intro a b x eq
-                    apply LEq_ext
-                    rw [←subset_union_lemma]
-                    rw [LEq_ext_iff, ←subset_union_lemma] at eq
-                    intro t
-                    apply kstar_lfp' eq }
+                    exact subset_union_lemma.mp (kstar_lfp' (subset_union_lemma.mpr eq)) }

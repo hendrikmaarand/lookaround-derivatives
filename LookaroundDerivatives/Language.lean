@@ -3,8 +3,9 @@ import LookaroundDerivatives.Triple
 def Lang (α : Type) := Triple α → Prop
 
 
-def LEq (k l : Lang α) :=
-  ∀ t, k t ↔ l t
+-- Languages are equal when they agree on every triple.
+@[ext] theorem Lang.ext {k l : Lang α} (h : ∀ t, k t ↔ l t) : k = l :=
+  funext λ t => propext (h t)
 
 
 def LSub (k l : Lang α) :=
@@ -84,8 +85,6 @@ postfix:max "⋆" => kstar
 prefix:max "◁" => lookbehind
 
 prefix:max "▷" => lookahead
-
-infix:50 " ≐ " => LEq
 
 infix:50 " ⊆ " => LSub
 
