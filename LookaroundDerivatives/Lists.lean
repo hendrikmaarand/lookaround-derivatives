@@ -1,17 +1,6 @@
 open List
 
 
-theorem append_singleton_iff  (w : List A) (a : A)
-                             : ∃ (h : A) (t : List A), w ++ [a] = h :: t := by
-  induction w with
-  | nil => exists a , []
-  | cons b w ih =>
-      have ⟨h, t, eq⟩ := ih
-      exists b, h :: t
-      rw [List.cons_append, eq]
-
-
-
 def List.productWith (f : A → B → C) (xs : List A) (ys : List B) : List C :=
   xs.flatMap λ x =>
   ys.flatMap λ y =>
@@ -31,9 +20,6 @@ def neSubs (xs : List A) : List (List A) :=
 
 #eval List.length (neSubs [1,2,3,4,5,6,7,8,9,10])
 
-
-def List.intersect [DecidableEq A] (xs ys : List A) : List A :=
-  List.filter (λ x => List.elem x ys) xs
 
 
 def splits (xs : List A) : List (List A × List A) :=
@@ -325,19 +311,6 @@ theorem neSubs_complete {A} {s xs : List A}
   rcases List.mem_cons.mp hs with eq | mem
   · contradiction
   · exact mem
-
-
-theorem mem_productWith_of {A} {es fs : List A} {ps : List (A × A)}
-                           (g : A → A → A)
-                           (sub : ∀ p ∈ ps, p.1 ∈ es ∧ p.2 ∈ fs)
-                           : ∀ m ∈ List.map (Function.uncurry g) ps,
-                               m ∈ List.productWith g es fs := by
-  intro a a_in
-  have ⟨⟨e', f'⟩, ef_in, eq⟩ := List.mem_map.mp a_in
-  have ⟨e'_in, f'_in⟩ := sub (e', f') ef_in
-  apply productWith_mem.mpr
-  exists e', f'
-  exact ⟨eq.symm, e'_in, f'_in⟩
 
 
 

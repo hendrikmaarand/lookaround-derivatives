@@ -101,6 +101,8 @@ theorem starElem'_cons {α} [DecidableEq α]
   intro e w ws
   simp [starElem', wDAhdExprs, focus, toMult', wDBhd, Function.comp_def, wDBhd_append]
 
+
+
 theorem starElem'_snoc {α} [DecidableEq α]
                        : ∀ (e : RE α) (ws : List (List α)) (w : List α),
                            starElem' e (ws ++ [w])
@@ -115,50 +117,6 @@ theorem starElem'_snoc {α} [DecidableEq α]
   rw [List.flatten_append, List.flatten_singleton]
   rw [toMult'_snoc]
 
-
-
-theorem starElem'_exists {α} [DecidableEq α]
-                         : ∀ (e : RE α) (ws : List (List α)),
-                           ∃ (ts : List (List α × List α × List α)),
-                             starElem' e ws
-                             =
-                             toMult' (List.map (λ (x, y, z) => wDAhd z (wD y (wDBhd x e))) ts)
-                                     (wDBhd ws.flatten e)* := by
-  intro e ws
-  exists List.map (λ (xs, y, zs) => (xs.flatten, y, zs.flatten)) (focus ws)
-  simp [starElem', wDAhdExprs, Function.comp_def]
-
----------------------------------------------------------------------
-
-def starElemSnoc {α} [DecidableEq α] (e : RE α) (ws : List (List α)) (w : List α) : RE α :=
-  toMult' (wDAhdExprs e ws w)
-          (wD w (wDBhd ws.flatten e) `· (wDBhd (ws.flatten ++ w) e)*)
-
-
-theorem starElemSnocExample1 (e : RE Char)
-          : starElemSnoc e [] ['a', 'b', 'c']
-            =
-            wD ['a', 'b', 'c'] e `· (wDBhd ['a', 'b', 'c'] e)* :=
-  rfl
-
-
-theorem starElemSnocExample2 (e : RE Char)
-          : starElemSnoc e [['a', 'b']] ['c']
-            =
-            wDAhd ['c'] (wD ['a', 'b'] e) `·
-              wD ['c'] (wDBhd ['a', 'b'] e) `·
-                (wDBhd ['a', 'b', 'c'] e)* :=
-  rfl
-
-
-theorem starElemSnocExample3 (e : RE Char)
-          : starElemSnoc e [['a'], ['b']] ['c']
-            =
-            (wDAhd ['b', 'c'] (wD ['a'] e)) `·
-              (wDAhd ['c'] (wD ['b'] (wDBhd ['a'] e))) `·
-                wD ['c'] (wDBhd ['a', 'b'] e) `·
-                  (wDBhd ['a', 'b', 'c'] e)* :=
-  rfl
 
 ---------------------------------------------------------------------
 

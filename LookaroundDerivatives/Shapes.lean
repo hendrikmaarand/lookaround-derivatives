@@ -159,6 +159,7 @@ theorem wDAhd_cons {α} [DecidableEq α]
     _ ≡ `▷ (wD w (extractLAhd a e))    := wDAhd_ahd (extractLAhd a e) w
 
 
+
 theorem wDAhd_cons_mult_inter {α} [DecidableEq α] {a a' : α} {w w' : List α} {e f : RE α}
                               : wDAhd (a :: w) e `· wDAhd (a' :: w') f ≡
                                 wDAhd (a :: w) e & wDAhd (a' :: w') f := by
@@ -412,12 +413,6 @@ theorem multShape_bhd [DecidableEq α]
                     (multShape_zero (DBhd b f) w)
         _ ≡ wDAhd (b :: w) (`◁ e) `· wD (b :: w) f :=
           plus_zero_r
-
-
-def multShapeFull [DecidableEq α] (e f : RE α) (y z : List α) :=
-  toSum <| List.map (λ (p, s) => wDAhd (s ++ z) (wD p e)
-                                 `· (wDAhd z (wD s (wDBhd p f))))
-                    (splits y)
 
 
 ------------------------------------------------------------------------------
