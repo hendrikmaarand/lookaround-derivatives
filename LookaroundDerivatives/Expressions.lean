@@ -484,6 +484,29 @@ theorem subsetUpTo_reprs' {α} {es fs : List (RE α)}
           exact .trans x_eq x'_eq
 
 
+-- A nonempty list of expressions that is a subset (up to ≡) of `es` is,
+-- up to ≡, the sum of a nonempty sublist of `es`.
+theorem toSum_neSubs_mem {α} [DecidableEq α] {sps es : List (RE α)}
+                         (ne : sps ≠ [])
+                         (sub : sps ≡⊆ es)
+                         : toSum sps ≡∈ List.map toSum (neSubs es) := by
+  have ⟨sps', ls', sub', eq'⟩ := subsetUpTo_reprs sub
+  have ⟨sps'', ne', sub'', eq''⟩ := exists_sublist_same sub'
+  exists toSum sps''
+  apply And.intro
+  . exact .trans eq' (toSum_mem_eq eq'')
+  . rw [List.mem_map]
+    exists sps''
+    apply And.intro
+    . apply neSubs_complete _ sub''
+      apply ne'
+      intro eq
+      apply ne
+      rw [List.eq_nil_iff_length_eq_zero, ls', ←List.eq_nil_iff_length_eq_zero]
+      exact eq
+    . rfl
+
+
 
 ------------------------------------------------------------------------
 

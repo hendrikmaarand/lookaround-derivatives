@@ -238,6 +238,8 @@ theorem starElem_summand {α} [DecidableEq α]
 
       have sps_ahd := wDAhdExprs_w_ne_ahd (wDBhd x e) ws' w'_ne
 
+      have sps''_in : sps'' ∈ subs (succs e) := subs_complete sub''
+
       have sps''_eq : ∀ (r : RE α), (r ≡∈ List.map (wDAhd z) (wDAhdExprs (wDBhd x e) ws' w'))
                                     ↔
                                     r ≡∈ sps'' := by
@@ -278,16 +280,11 @@ theorem starElem_summand {α} [DecidableEq α]
 
           . simp [mainSummands]
             exists sps''
-            apply And.intro
-            . rw [subs_eq_neSubs]
-              cases sps''
-              . simp
-              . simp [neSubs_complete (by simp) sub'']
-
-            . exists e'
-              simp [e'_in]
-              right
-              exists e_b
+            apply And.intro sps''_in
+            exists e'
+            simp [e'_in]
+            right
+            exists e_b
 
       | c :: z =>
           exists toMult' sps'' (e' `· `◁ `1)
@@ -319,14 +316,9 @@ theorem starElem_summand {α} [DecidableEq α]
 
           . simp [mainSummands]
             exists sps''
-            apply And.intro
-            . rw [subs_eq_neSubs]
-              cases sps''
-              . simp
-              . simp [neSubs_complete (by simp) sub'']
-
-            . exists e'
-              simp [e'_in]
+            apply And.intro sps''_in
+            exists e'
+            simp [e'_in]
 
 
 
@@ -448,13 +440,9 @@ theorem wDAhd_wD_wDBhd_succs {α} [DecidableEq α]
           exact .multCong e'_eq f'_eq
         . exists e', f'
 
-      -- sps' is a subset (no longer up to)
-      have ⟨sps', ls', sub', eq'⟩ := subsetUpTo_reprs sub
+      have ⟨s, s_eq, s_in⟩ := toSum_neSubs_mem sps_ne sub
 
-      -- sps'' is a sublist of product of succs e and succs f
-      have ⟨sps'', ne', sub'', eq''⟩ := exists_sublist_same sub'
-
-      exists toSum sps''
+      exists s
 
       apply And.intro
       . calc wDAhd z (wD y (wDBhd x (e `· f)))
@@ -486,18 +474,10 @@ theorem wDAhd_wD_wDBhd_succs {α} [DecidableEq α]
                   intro (p, s) ps_in
                   apply wDAhd_mult
 
-          _ ≡ toSum sps'
-            := eq'
-          _ ≡ toSum sps''
-            := toSum_mem_eq eq''
+          _ ≡ s
+            := s_eq
 
-      . simp
-        exists sps''
-        simp
-        apply neSubs_complete
-        . rw [List.eq_nil_iff_length_eq_zero, ls', ←List.eq_nil_iff_length_eq_zero] at sps_ne
-          exact ne' sps_ne
-        . exact sub''
+      . exact s_in
 
   | .etop =>
       match y with
@@ -627,11 +607,9 @@ theorem wDAhd_wD_wDBhd_succs {α} [DecidableEq α]
             rw [eq] at lem
             exact lem
 
-          have ⟨sps', ls', sub', eq'⟩ := subsetUpTo_reprs sub
+          have ⟨s, s_eq, s_in⟩ := toSum_neSubs_mem sps_ne sub
 
-          have ⟨sps'', ne', sub'', eq''⟩ := exists_sublist_same sub'
-
-          exists toSum sps''
+          exists s
           apply And.intro
           . calc wDAhd z (wD (b :: y) (wDBhd x e*))
             _ ≡ wDAhd z (wD (b :: y) (wDBhd x e)*)
@@ -656,21 +634,12 @@ theorem wDAhd_wD_wDBhd_succs {α} [DecidableEq α]
             _ ≡ toSum sps
               := .refl rfl
 
-            _ ≡ toSum sps'
-              := eq'
-
-            _ ≡ toSum sps''
-              := toSum_mem_eq eq''
+            _ ≡ s
+              := s_eq
 
           . rw [succs]
             apply List.mem_append_right
-            rw [List.mem_map]
-            exists sps''
-            simp
-            apply neSubs_complete
-            . rw [List.eq_nil_iff_length_eq_zero, ls', ←List.eq_nil_iff_length_eq_zero] at sps_ne
-              exact ne' sps_ne
-            . exact sub''
+            exact s_in
 
 
   | .lookbehind e =>
@@ -751,26 +720,9 @@ theorem wxD_succs {α} [DecidableEq α]
     rw [behind, ahead, mtch]
     exact wDAhd_wD_wDBhd_succs e (behind t) (mtch t) (ahead t)
 
-  have ⟨sps', ls', sub', eq'⟩ := subsetUpTo_reprs sub
+  have ⟨s, s_eq, s_in⟩ := toSum_neSubs_mem sps_ne sub
 
-  have ⟨sps'', ne', sub'', eq''⟩ := exists_sublist_same sub'
-
-  exists toSum sps''
-  apply And.intro
-  . calc wxD u e
-      _ ≡ toSum sps   := wxD_equiv u e
-      _ ≡ toSum sps'  := eq'
-      _ ≡ toSum sps'' := toSum_mem_eq eq''
-
-  . simp
-    exists sps''
-    simp
-    apply neSubs_complete
-    . apply ne'
-      intro eq
-      rw [List.eq_nil_iff_length_eq_zero] at eq sps_ne
-      rw [ls'] at sps_ne
-      contradiction
-    . exact sub''
+  exists s
+  exact ⟨.trans (wxD_equiv u e) s_eq, s_in⟩
 
 #print axioms wxD_succs
