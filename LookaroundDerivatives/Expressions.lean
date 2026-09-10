@@ -411,77 +411,55 @@ theorem subsetUpTo_reprs {α} {es fs : List (RE α)}
                          (sub : es ≡⊆ fs)
                          : ∃ fs', List.length es = List.length fs' ∧
                                   fs' ⊆ fs ∧
-                                  toSum es ≡ toSum fs' := by
+                                  toSum es ≡ toSum fs' ∧
+                                  ∀ (x : RE α), (x ≡∈ es) ↔ (x ≡∈ fs') := by
   match es with
-  | [] => exists []
-          simp [toSum]
-          exact .refl rfl
-  | e :: es =>
-      have ⟨f', eq, f'_in⟩ := sub List.mem_cons_self
-      have sub' : es ≡⊆ fs := by
-        intro e' e'_in
-        exact sub (List.mem_cons_of_mem e e'_in)
-      have ⟨fs', ls', ss', eq'⟩ := subsetUpTo_reprs sub'
-      exists f' :: fs'
-      constructor
-      . simp [ls']
-      . constructor
-        . intro x x_in
-          apply Or.elim (List.mem_cons.mp x_in)
-          . intro eq
-            simp [eq, f'_in]
-          . apply ss'
-
-        . exact toSum_cons_equiv eq eq'
-
-
-theorem subsetUpTo_reprs' {α} {es fs : List (RE α)}
-                          (sub : es ≡⊆ fs)
-                          : ∃ fs', List.length es = List.length fs' ∧
-                                   fs' ⊆ fs ∧
-                                   ∀ (x : RE α), (x ≡∈ es) ↔ (x ≡∈ fs') := by
-  match es with
-  | [] => exists []
-          simp
+  | [] => exact ⟨[], rfl, List.nil_subset fs, .refl rfl, λ _ => Iff.rfl⟩
 
   | e :: es =>
       have ⟨f', eq, f'_in⟩ := sub List.mem_cons_self
       have sub' : es ≡⊆ fs := by
         intro e' e'_in
         exact sub (List.mem_cons_of_mem e e'_in)
-      have ⟨fs', ls', ss', eq'⟩ := subsetUpTo_reprs' sub'
+      have ⟨fs', ls', ss', eq', eqs'⟩ := subsetUpTo_reprs sub'
 
       exists f' :: fs'
-      simp [ls', f'_in, ss']
-      intro x
-      constructor
-      . intro ⟨x', x_eq, x'_in⟩
-        apply Or.elim (List.mem_cons.mp x'_in)
-        . intro x'_eq
-          rw [x'_eq] at x_eq
-          exists f'
-          simp
-          exact .trans x_eq eq
+      refine ⟨by simp [ls'], ?_, toSum_cons_equiv eq eq', ?_⟩
+      . intro x x_in
+        apply Or.elim (List.mem_cons.mp x_in)
+        . intro eq
+          simp [eq, f'_in]
+        . apply ss'
 
-        . intro x'_in
-          have ⟨x'', x'_eq, x''_in⟩ := (eq' x').mp ⟨x', .refl rfl, x'_in⟩
-          exists x''
-          simp [x''_in]
-          exact .trans x_eq x'_eq
+      . intro x
+        constructor
+        . intro ⟨x', x_eq, x'_in⟩
+          apply Or.elim (List.mem_cons.mp x'_in)
+          . intro x'_eq
+            rw [x'_eq] at x_eq
+            exists f'
+            simp
+            exact .trans x_eq eq
 
-      . intro ⟨x', x_eq, x'_in⟩
-        apply Or.elim (List.mem_cons.mp x'_in)
-        . intro x'_eq
-          rw [x'_eq] at x_eq
-          exists e
-          simp
-          exact .trans x_eq (.sym eq)
+          . intro x'_in
+            have ⟨x'', x'_eq, x''_in⟩ := (eqs' x').mp ⟨x', .refl rfl, x'_in⟩
+            exists x''
+            simp [x''_in]
+            exact .trans x_eq x'_eq
 
-        . intro x'_in
-          have ⟨x'', x'_eq, x''_in⟩ := (eq' x').mpr ⟨x', .refl rfl, x'_in⟩
-          exists x''
-          simp [x''_in]
-          exact .trans x_eq x'_eq
+        . intro ⟨x', x_eq, x'_in⟩
+          apply Or.elim (List.mem_cons.mp x'_in)
+          . intro x'_eq
+            rw [x'_eq] at x_eq
+            exists e
+            simp
+            exact .trans x_eq (.sym eq)
+
+          . intro x'_in
+            have ⟨x'', x'_eq, x''_in⟩ := (eqs' x').mpr ⟨x', .refl rfl, x'_in⟩
+            exists x''
+            simp [x''_in]
+            exact .trans x_eq x'_eq
 
 
 -- A nonempty list of expressions that is a subset (up to ≡) of `es` is,
@@ -490,7 +468,7 @@ theorem toSum_neSubs_mem {α} [DecidableEq α] {sps es : List (RE α)}
                          (ne : sps ≠ [])
                          (sub : sps ≡⊆ es)
                          : toSum sps ≡∈ List.map toSum (neSubs es) := by
-  have ⟨sps', ls', sub', eq'⟩ := subsetUpTo_reprs sub
+  have ⟨sps', ls', sub', eq', _⟩ := subsetUpTo_reprs sub
   have ⟨sps'', ne', sub'', eq''⟩ := exists_sublist_same sub'
   exists toSum sps''
   apply And.intro

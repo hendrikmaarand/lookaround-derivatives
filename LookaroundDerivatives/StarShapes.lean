@@ -199,15 +199,6 @@ theorem starElemExample3 (e : RE Char)
 
 ----------------------------------------------------------------------
 
-theorem wDAhd_foldl_flatten {α} [DecidableEq α]
-                            : ∀ (e : RE α) (ws : List (List α)),
-                                List.foldl (flip wDAhd) e ws = wDAhd ws.flatten e := by
-  intro e ws
-  match ws with
-  | [] => simp [wDAhd]
-  | w :: ws => simp [flip, wDAhd_append]
-               rw [wDAhd_foldl_flatten]
-
 theorem starElem_defs {α} [DecidableEq α]
                       : ∀ (e : RE α) (ws : List (List α)),
                           starElem e ws = starElem' e ws := by

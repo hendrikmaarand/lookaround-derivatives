@@ -26,6 +26,16 @@ theorem wDAhd_append {α} [DecidableEq α]
   | a :: u => simp only [List.cons_append, wDAhd]
               rw [wDAhd_append u v (DAhd a e)]
 
+theorem wDAhd_foldl_flatten {α} [DecidableEq α]
+                            : ∀ (e : RE α) (ws : List (List α)),
+                                List.foldl (flip wDAhd) e ws = wDAhd ws.flatten e := by
+  intro e ws
+  match ws with
+  | [] => simp [wDAhd]
+  | w :: ws => simp [flip, wDAhd_append]
+               rw [wDAhd_foldl_flatten]
+
+
 ------------------------------------------------------------------------
 
 def extractLAhd {α} [DecidableEq α] (a : α) (e : RE α) : RE α :=
@@ -431,18 +441,13 @@ theorem D_after_wDAhd_is_zero_list [DecidableEq α]
                                    {ws : List (List α)} (ne : ¬ ws = [])
                                    (h : ∀ w ∈ ws, ¬ w = [])
                                    : D a (List.foldl (flip wDAhd) e ws) ≡ `0 := by
+  rw [wDAhd_foldl_flatten]
+  apply D_after_ne_wDAhd_is_zero
+  intro eq
+  rw [List.flatten_eq_nil_iff] at eq
   match ws with
-  | [] => contradiction
-  | w :: [] =>
-      rw [List.foldl, flip, List.foldl]
-      apply D_after_ne_wDAhd_is_zero
-      apply h
-      simp
-  | w :: w' :: ws =>
-      rw [List.foldl, flip]
-      apply D_after_wDAhd_is_zero_list a (wDAhd w e) (by simp)
-      intro y y_in
-      simp [h, y_in]
+  | [] => exact ne rfl
+  | w :: ws => exact h w List.mem_cons_self (eq w List.mem_cons_self)
 
 
 

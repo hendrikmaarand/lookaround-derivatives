@@ -225,6 +225,15 @@ theorem tD_zero {α} [DecidableEq α]  {t : Triple α} {e : RE α}
   exact .refl rfl
 
 
+-- sum of triple-derivatives of an expression whose triple-derivatives
+-- all vanish is zero.
+theorem toSum_tD_zero {α} [DecidableEq α] {g : RE α}
+                      (h : ∀ (t : Triple α), tD t g ≡ `0)
+                      (ts : List (Triple α))
+                      : toSum (List.map (flip tD g) ts) ≡ `0 :=
+  .trans (toSum_map ts (λ t _ => h t)) (toSum_map_zero ts)
+
+
 
 theorem tD_DBhd {α} [DecidableEq α] (e : RE α) (a : α) (u x y z: List α)
                      : List.map (flip tD e) (trpls' u (a :: x, y, z))
@@ -238,26 +247,12 @@ theorem tD_DBhd {α} [DecidableEq α] (e : RE α) (a : α) (u x y z: List α)
 theorem tD_DBhd_after_D_zero {α} [DecidableEq α] (e : RE α) (a b : α) (u x y z : List α)
                             : toSum (List.map (flip tD (D a e)) (trpls' u (b :: x, y, z))) ≡ `0 := by
   rw [tD_DBhd]
-  calc toSum (List.map (flip tD (DBhd b (D a e))) (trpls' u (x, y, z)))
-    _ ≡ toSum (List.map (λ _ => `0) (trpls' u (x, y, z)))
-      := by apply toSum_map
-            intro t t_in
-            apply tD_zero
-            apply DBhd_after_D_is_zero
-    _ ≡ `0
-      := toSum_map_zero (trpls' u (x, y, z))
+  exact toSum_tD_zero (λ _ => tD_zero (DBhd_after_D_is_zero a b e)) _
 
 theorem tD_DBhd_after_DAhd_zero {α} [DecidableEq α] (e : RE α) (a b : α) (u x y z : List α)
                                 : toSum (List.map (flip tD (DAhd a e)) (trpls' u (b :: x, y, z))) ≡ `0 := by
   rw [tD_DBhd]
-  calc toSum (List.map (flip tD (DBhd b (DAhd a e))) (trpls' u (x, y, z)))
-    _ ≡ toSum (List.map (λ _ => `0) (trpls' u (x, y, z)))
-      := by apply toSum_map
-            intro t t_in
-            apply tD_zero
-            apply DBhd_after_DAhd_is_zero
-    _ ≡ `0
-      := toSum_map_zero (trpls' u (x, y, z))
+  exact toSum_tD_zero (λ _ => tD_zero (DBhd_after_DAhd_is_zero a b e)) _
 
 
 theorem tD_D {α} [DecidableEq α] (e : RE α) (a : α) (u y z: List α)
@@ -310,17 +305,9 @@ theorem tD_D {α} [DecidableEq α] (e : RE α) (a : α) (u y z: List α)
 
 
 theorem tD_D_after_DAhd_zero {α} [DecidableEq α] (e : RE α) (a b : α) (u y z : List α)
-                             : toSum (List.map (flip tD (DAhd a e)) (trpls' u ([], b :: y, z))) ≡ `0 := by
-  calc toSum (List.map (flip tD (DAhd a e)) (trpls' u ([], b :: y, z)))
-    _ ≡ toSum (List.map (flip tD (D b (DAhd a e))) (trpls' u ([], y, z)))
-      := by apply tD_D
-    _ ≡ toSum (List.map (λ _ => `0) (trpls' u ([], y, z)))
-      := by apply toSum_map
-            intro t t_in
-            apply tD_zero
-            apply D_after_DAhd_is_zero
-    _ ≡ `0
-      := toSum_map_zero (trpls' u ([], y, z))
+                             : toSum (List.map (flip tD (DAhd a e)) (trpls' u ([], b :: y, z))) ≡ `0 :=
+  .trans (tD_D (DAhd a e) b u y z)
+         (toSum_tD_zero (λ _ => tD_zero (D_after_DAhd_is_zero a b e)) _)
 
 
 

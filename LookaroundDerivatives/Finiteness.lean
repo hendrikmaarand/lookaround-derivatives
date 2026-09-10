@@ -231,7 +231,7 @@ theorem starElem_summand {α} [DecidableEq α]
       have ⟨e', e'_eq, e'_in⟩ := hyp (x ++ ws'.flatten) w' z
 
       -- sps' is a subset (no longer up to)
-      have ⟨sps', ls', sub', eq'⟩ := subsetUpTo_reprs' sub
+      have ⟨sps', ls', sub', _, eq'⟩ := subsetUpTo_reprs sub
 
       -- sps'' is a sublist of product of succs e and succs f
       have ⟨sps'', ne', sub'', eq''⟩ := exists_sublist_same sub'

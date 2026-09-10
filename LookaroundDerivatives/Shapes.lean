@@ -68,14 +68,19 @@ theorem wD_1_cons [DecidableEq α]
   intro a w
   exact wD_0 w
 
+theorem wDAhd_bhd_1 [DecidableEq α] : ∀ (w : List α), wDAhd w (`◁ `1) ≡ `◁ `1 := by
+  intro w
+  induction w
+  . exact .refl rfl
+  . rw [wDAhd, DAhd, DAhd]
+    assumption
+
 theorem wDAhd_1_cons [DecidableEq α]
                      : ∀ (a : α) (w : List α),
                          wDAhd (a :: w) `1 ≡ `◁ `1 := by
   intro a w
   rw [wDAhd, DAhd]
-  match w with
-  | [] => exact .refl rfl
-  | b :: w' => apply wDAhd_1_cons b
+  exact wDAhd_bhd_1 w
 
 
 -----------------------------------------------------------------------------
@@ -513,13 +518,6 @@ theorem wDBhd_top [DecidableEq α]
 
 
 
-theorem wDAhd_bhd_1 [DecidableEq α] : ∀ (w : List α), wDAhd w (`◁ `1) ≡ `◁ `1 := by
-  intro w
-  induction w
-  . exact .refl rfl
-  . rw [wDAhd, DAhd, DAhd]
-    assumption
-
 theorem wD_top_cons [DecidableEq α]
                     : ∀ (a : α) (w : List α),
                         wD (a :: w) ⊤ ≡ `◁ `1 `· ⊤ := by
@@ -540,9 +538,7 @@ theorem wDAhd_top_cons [DecidableEq α]
                            wDAhd (a :: w) ⊤ ≡ `◁ `1 := by
   intro a w
   rw [wDAhd, DAhd]
-  cases w
-  . exact .refl rfl
-  . apply wDAhd_bhd_1
+  exact wDAhd_bhd_1 w
 
 
 ----------------------------------------------------------------------------
