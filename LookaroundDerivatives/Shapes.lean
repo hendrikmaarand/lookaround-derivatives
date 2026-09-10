@@ -323,7 +323,7 @@ theorem multShape_cons  [DecidableEq α]
                          wDAhd (a :: w) e `· wD (a :: w) f
                          `+
                          multShape (D a e) (DBhd a f) w := by
-  rw [multShape, splits_cons, multShape]
+  rw [multShape, splits, multShape]
   have ⟨ps, eq⟩ := splits_ne w
   rw [eq]
   simp [toSum]

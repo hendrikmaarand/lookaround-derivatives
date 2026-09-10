@@ -28,12 +28,6 @@ def splits (xs : List A) : List (List A × List A) :=
   | x :: xs => ([], x :: xs) :: List.map (λ (p, s) => (x :: p, s)) (splits xs)
 
 
-theorem splits_cons {x : A}{xs : List A}
-                    : splits (x :: xs)
-                      = ([], x :: xs) :: List.map (λ (p, s) => (x :: p, s)) (splits xs) :=
-  by rfl
-
-
 
 theorem splits_ne (xs : List A)
                   : ∃ ps, splits xs = ([], xs) :: ps := by
@@ -252,13 +246,14 @@ theorem productWith_mem {A B C} {xs : List A}{ys : List B}{f : A → B → C} {z
 
 
 
-theorem subs_eq_cons {A} (xs : List A) : ∃ t, subs xs = [] :: t := by
+theorem subs_eq_neSubs {A} (xs : List A) : subs xs = [] :: neSubs xs := by
   induction xs with
-  | nil => exact ⟨[], rfl⟩
+  | nil => rfl
   | cons x xs ih =>
-      have ⟨t', ht'⟩ := ih
-      simp [subs]
-      simp [ht']
+      unfold neSubs
+      rw [subs, ih]
+      rfl
+
 
 theorem mem_singleton_subs {A} {x : A} {xs : List A} : [x] ∈ subs xs ↔ x ∈ xs := by
   induction xs with
@@ -273,22 +268,15 @@ theorem mem_singleton_subs {A} {x : A} {xs : List A} : [x] ∈ subs xs ↔ x ∈
         simp
     · intro h
       rcases h with h | h
-      · simp [h]
-        have ⟨t, ht⟩ := subs_eq_cons ys
-        exact ⟨[], by simp [ht]⟩
+      · exists []
+        simp [h, subs_eq_neSubs]
       · exact ⟨[x], by simp [ih.mpr h]⟩
 
 theorem singleton_neSubs {A} {x : A}{xs : List A} : [x] ∈ neSubs xs ↔ x ∈ xs  := by
-  have ⟨t, ht⟩ := subs_eq_cons xs
-  simp [neSubs, ht]
   rw [←mem_singleton_subs (x := x)]
-  rw [ht]
+  rw [neSubs, subs_eq_neSubs]
   simp
 
-theorem subs_eq_neSubs {A} (xs : List A) : subs xs = [] :: neSubs xs := by
-  have ⟨t, ht⟩ := subs_eq_cons xs
-  rw [neSubs, ht]
-  simp
 
 
 theorem subs_complete {A} {s xs : List A} (h : s <+ xs) : s ∈ subs xs := by
