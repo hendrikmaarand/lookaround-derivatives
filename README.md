@@ -1,5 +1,6 @@
-# lookaround-derivatives
-Lean formalisation of the paper "Derivatives of regular expressions with lookarounds".
+# Derivatives of regular expressions with lookarounds
+
+This repository is the Lean formalisation of the paper "Derivatives of regular expressions with lookarounds".
 
 # Paper-to-Lean mapping
 
@@ -13,7 +14,6 @@ Key definitions and results of the paper in `LookaroundDerivatives/`.
 | Def. 2, derivatives | `derLBhd`, `der`, `derLAhd` | `Language.lean` |
 | Prop. 1 | `derLBhd_after_der` | `LangDerProperties.lean` |
 | Def. 3, derivatives along a word | `wderLBhd`, `wder`, `wderLAhd` | `Language.lean` |
-| Prop. 2, e.g. der_{uv} L = der_v (der_u L) | `wder_append` (also `wderLBhd_append`, `wderLAhd_append`) | `Language.lean` |
 | Prop. 3, membership via derivatives | `nlbl_tder_iff_lang_mem` | `Language.lean` |
 | Def. 4, existential derivative der♦ | `xder`, `wxder` | `Language.lean` |
 | Prop. 4, existence of a match via der♦ | `exists_mem_iff_wxder_nlbl` | `Language.lean` |
