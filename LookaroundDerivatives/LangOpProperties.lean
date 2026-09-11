@@ -290,6 +290,10 @@ theorem lbhd_zero {α} : (◁ ∅ : Lang α) = ∅ := by
   ext t
   simp [lookbehind, empty]
 
+theorem lbhd_top {α} : (◁ 𝕋 : Lang α) = 𝟙 := by
+  ext t
+  simp [lookbehind, top, unit]
+
 theorem lbhd_inter : ∀ {k l : Lang α}, ◁ k ∩ ◁ l = ◁ (k ∩ l) := by
   intro k l
   ext t
@@ -320,6 +324,10 @@ theorem lahd_subeps : ∀ {l : Lang α}, ▷ l ⊆ 𝟙 := by
 theorem lahd_zero {α} : (▷ ∅ : Lang α) = ∅ := by
   ext t
   simp [lookahead, empty]
+
+theorem lahd_top {α} : (▷ 𝕋 : Lang α) = 𝟙 := by
+  ext t
+  simp [lookahead, top, unit]
 
 theorem lahd_unit_lbhd : (▷ 𝟙 : Lang α) = ◁ (𝕋 ⊙ ▷ 𝟙) := by
   ext t

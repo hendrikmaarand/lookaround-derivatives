@@ -210,6 +210,29 @@ theorem wderLAhd_mem (w : List α) (l : Lang α) :
                 exact ⟨bt, mt, h⟩
 
 
+-- Derivatives along a word are compatible with concatenation of words.
+
+theorem wderLBhd_append (u v : List α) (l : Lang α) :
+    wderLBhd (u ++ v) l = wderLBhd v (wderLBhd u l) := by
+  match u with
+  | [] => simp only [List.nil_append, wderLBhd]
+  | a :: u => simp only [List.cons_append, wderLBhd]
+              rw [wderLBhd_append u v (derLBhd a l)]
+
+theorem wder_append (u v : List α) (l : Lang α) :
+    wder (u ++ v) l = wder v (wder u l) := by
+  match u with
+  | [] => simp only [List.nil_append, wder]
+  | a :: u => simp only [List.cons_append, wder]
+              rw [wder_append u v (der a l)]
+
+theorem wderLAhd_append (u v : List α) (l : Lang α) :
+    wderLAhd (u ++ v) l = wderLAhd v (wderLAhd u l) := by
+  match u with
+  | [] => simp only [List.nil_append, wderLAhd]
+  | a :: u => simp only [List.cons_append, wderLAhd]
+              rw [wderLAhd_append u v (derLAhd a l)]
+
 -------------------------------------------------------------------
 
 theorem nlbl_tder_iff_lang_mem (t : Triple α) (l : Lang α) :
