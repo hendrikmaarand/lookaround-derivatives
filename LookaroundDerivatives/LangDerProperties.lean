@@ -1,6 +1,9 @@
 import LookaroundDerivatives.Language
 import LookaroundDerivatives.LangOpProperties
 
+namespace Lang
+open Triple
+
 
 theorem derLBhd_after_der {l : Lang α}
                           : ∀ (a b : α), derLBhd b (der a l) = ∅ := by
@@ -323,7 +326,7 @@ theorem derLAhd_inter {k l : Lang α} : ∀ (a : α),
   intro a
   ext t
   rw [derLAhd, intersection, intersection, derLAhd, derLAhd]
-  simp [and_and_and_comm, and_self]
+  rw [and_and_and_comm, and_self, and_and_and_comm, and_self]
 
 
 ---------------------------------------------------------------
@@ -389,7 +392,7 @@ theorem derLBhd_StarLFP (a : α) (l : Lang α)(tr : Triple α)
         rw [behind, mtch, ahead] at w
         rw [←w] at l_m
 
-        rw [triple_eta tr]
+        rw [Triple.eta tr]
         rw [←q]
         rw [r] at l_m
 
@@ -456,7 +459,7 @@ theorem der_help {α : Type}
   induction ls_mem with
   | @base t u_m =>
       rw [unit] at u_m
-      rw [triple_eta t, u_m] at tr_eq
+      rw [Triple.eta t, u_m] at tr_eq
       injections
 
   | @step lb' m₁' m₂' la' m' eq l_m ls_m ih =>
@@ -574,3 +577,5 @@ theorem derLAhd_lookahead {l : Lang α} : ∀ (a : α),
   rw [derLAhd, lookahead, lookahead, der]
   rw [behind, mtch, ahead, behind, mtch, ahead]
   simp [←and_assoc, and_comm]
+
+end Lang

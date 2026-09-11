@@ -4,6 +4,8 @@ import LookaroundDerivatives.Lists
 import LookaroundDerivatives.DerProperties
 import LookaroundDerivatives.Shapes
 
+namespace RE
+
 
 theorem toSum_map_zero {X} {α} [DecidableEq α]
                        (xs : List X)
@@ -401,3 +403,5 @@ theorem wxD_equiv {α} [DecidableEq α]
           := .refl rfl
         _ ≡ toSum (List.map (flip tD e) (trpls (a :: u)))
           := .refl rfl
+
+end RE

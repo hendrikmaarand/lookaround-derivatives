@@ -4,6 +4,9 @@ import LookaroundDerivatives.Lists
 import LookaroundDerivatives.DerProperties
 import LookaroundDerivatives.Shapes
 
+namespace RE
+open List (addToHead addToLast foldl_addToLast neSplits neSplits_elems_nonEmpty neSplits_snoc focus focus_append)
+
 
 
 def wDAhdExprs {α} [DecidableEq α] (e : RE α) (ws : List (List α)) (w : List α) : List (RE α) :=
@@ -425,3 +428,5 @@ theorem wDAhd_star_cons [DecidableEq α]
 
 
 --------------------------------------------------------------------------------
+
+end RE

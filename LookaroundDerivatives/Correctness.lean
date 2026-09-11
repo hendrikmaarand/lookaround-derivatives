@@ -4,6 +4,9 @@ import LookaroundDerivatives.LangOpProperties
 import LookaroundDerivatives.LangDerProperties
 import LookaroundDerivatives.Expressions
 
+namespace RE
+open Triple Lang
+
 
 def sem (r : RE α) : Lang α :=
   match r with
@@ -304,3 +307,5 @@ def decideExists [DecidableEq α] (w : List α) (r : RE α)
     exact h
 
 #print axioms decideExists
+
+end RE

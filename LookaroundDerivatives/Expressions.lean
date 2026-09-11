@@ -27,6 +27,10 @@ postfix:max "*" => RE.star
 prefix:max "`◁" => RE.lookbehind
 prefix:max "`▷" => RE.lookahead
 
+namespace RE
+open Triple
+open List (neSubs neSubs_complete exists_sublist_same)
+
 
 def N (r : RE α) : Bool :=
   match r with
@@ -677,3 +681,5 @@ theorem toMult'_mem_eq {α} {rs rs' : List (RE α)} {r r' : RE α}
     _ ≡ toMult' rs r'          := toMult'_base_eq eq
     _ ≡ toMult' (rs' ++ rs) r' := .sym (toMult'_append_subset rs_ahd sub')
     _ ≡ toMult' rs' r'         := toMult'_append_subset' rs'_ahd sub
+
+end RE

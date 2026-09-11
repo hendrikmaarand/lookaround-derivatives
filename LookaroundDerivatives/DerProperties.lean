@@ -1,6 +1,8 @@
 import LookaroundDerivatives.Triple
 import LookaroundDerivatives.Expressions
 
+namespace RE
+
 
 theorem wD_append {α} [DecidableEq α]
                   : ∀ (u v : List α) (e : RE α), wD (u ++ v) e = wD v (wD u e) := by
@@ -579,3 +581,5 @@ theorem DBhd_after_DAhd_is_zero {α} [DecidableEq α]
       rw [DAhd, DBhd]
       apply Equiv.trans (.lahdCong (DBhd_after_D_is_zero a b e))
       exact .lahdZero
+
+end RE

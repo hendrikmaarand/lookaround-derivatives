@@ -3,6 +3,9 @@ import LookaroundDerivatives.Expressions
 import LookaroundDerivatives.Lists
 import LookaroundDerivatives.DerProperties
 
+namespace RE
+open List (splits splits_ne)
+
 
 ----------------------------------------------------------------------------
 
@@ -602,3 +605,5 @@ theorem wxD_plus {α} [DecidableEq α]
                        (by apply Equiv.sym; apply wxD_plus)
 
         _ ≡ wxD (a :: w) e `+ wxD (a :: w) f := .refl rfl
+
+end RE

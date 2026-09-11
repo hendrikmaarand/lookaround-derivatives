@@ -1,5 +1,8 @@
 import LookaroundDerivatives.Language
 
+namespace Lang
+open Triple
+
 
 theorem union_assoc : ∀ {l₁ l₂ l₃ : Lang α}, l₁ ∪ (l₂ ∪ l₃) = (l₁ ∪ l₂) ∪ l₃ := by
   intro l₁ l₂ l₃
@@ -109,7 +112,7 @@ theorem concat_unit_l_der : ∀ {a : α} {l : Lang α}, ◁ 𝟙 ⊙ (der a l) =
     subst eq₂
     simp_all
     rw [←eq₁] at mem
-    rw [triple_eta t]
+    rw [Triple.eta t]
     rw [eq₃]
     exact mem
 
@@ -130,7 +133,7 @@ theorem concat_unit_l_derLAhd : ∀ {a : α} {l : Lang α}, ◁ 𝟙 ⊙ (derLAh
     subst eq₂
     simp_all
     rw [←eq₁] at mem
-    rw [triple_eta t]
+    rw [Triple.eta t]
     rw [eq₃]
     exact mem
 
@@ -152,12 +155,12 @@ theorem concat_subeps_inter {α} : ∀ {k l : Lang α},
     subst m₁_eq
     subst m₂_eq
     simp at mt_eq k_m l_m
-    rw [intersection, triple_eta t, mt_eq]
+    rw [intersection, Triple.eta t, mt_eq]
     exact ⟨k_m, l_m⟩
 
   . intro ⟨k_m, l_m⟩
     have mt_eq : mtch t = [] := k_sub k_m
-    rw [triple_eta t, mt_eq] at k_m l_m
+    rw [Triple.eta t, mt_eq] at k_m l_m
     rw [concat]
     exists [], []
     simp [mt_eq, k_m, l_m]
@@ -649,3 +652,5 @@ theorem slb_from_lookbehind : ∀ (l : Lang α), ◁ (𝕋 ⊙ l) = slb l := by
   . intro ⟨mt_eq, x, y, bt_eq, l_m⟩
     apply And.intro mt_eq
     exists x, y
+
+end Lang

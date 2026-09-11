@@ -1,7 +1,7 @@
-open List
+namespace List
 
 
-def List.productWith (f : A → B → C) (xs : List A) (ys : List B) : List C :=
+def productWith (f : A → B → C) (xs : List A) (ys : List B) : List C :=
   xs.flatMap λ x =>
   ys.flatMap λ y =>
   [f x y]
@@ -390,3 +390,5 @@ theorem focus_append {A} (xs ys : List A)
         left
         exists []
         simp
+
+end List

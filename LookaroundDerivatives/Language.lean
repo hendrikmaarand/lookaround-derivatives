@@ -2,9 +2,12 @@ import LookaroundDerivatives.Triple
 
 def Lang (α : Type) := Triple α → Prop
 
+namespace Lang
+open Triple
+
 
 -- Languages are equal when they agree on every triple.
-@[ext] theorem Lang.ext {k l : Lang α} (h : ∀ t, k t ↔ l t) : k = l :=
+@[ext] theorem ext {k l : Lang α} (h : ∀ t, k t ↔ l t) : k = l :=
   funext λ t => propext (h t)
 
 
@@ -317,3 +320,5 @@ def pla (l : Lang α) : Lang α := λ t =>
   mtch t = [] ∧
   ∃ y z, ahead t = y ++ z ∧
          l (behind t, y, z)
+
+end Lang

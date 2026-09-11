@@ -1,5 +1,8 @@
 import LookaroundDerivatives.LangOpProperties
 
+namespace Lang
+open Triple
+
 structure KA (A : Type) where
   plus : A → A → A
   mult : A → A → A
@@ -68,3 +71,5 @@ def ka : KA (Lang α) :=
                     exact subset_union_lemma.mp (kstar_lfp (subset_union_lemma.mpr eq))
   , star_lfp' := by intro a b x eq
                     exact subset_union_lemma.mp (kstar_lfp' (subset_union_lemma.mpr eq)) }
+
+end Lang

@@ -6,6 +6,10 @@ import LookaroundDerivatives.Shapes
 import LookaroundDerivatives.StarShapes
 import LookaroundDerivatives.ExistDerSum
 
+namespace RE
+open Triple
+open List (subs neSubs splits splits_ne neSplits neSplits_nonEmpty neSplits_elems_nonEmpty productWith_mem singleton_neSubs subs_complete exists_sublist_same)
+
 
 
 -- If `es` are the successors of e, then compute
@@ -716,7 +720,7 @@ theorem wxD_succs {α} [DecidableEq α]
     simp at sp_mem
     obtain ⟨t, t_mem, sp_eq⟩ := sp_mem
     rw [←sp_eq]
-    rw [flip, triple_eta t, tD]
+    rw [flip, Triple.eta t, tD]
     rw [behind, ahead, mtch]
     exact wDAhd_wD_wDBhd_succs e (behind t) (mtch t) (ahead t)
 
@@ -726,3 +730,5 @@ theorem wxD_succs {α} [DecidableEq α]
   exact ⟨.trans (wxD_equiv u e) s_eq, s_in⟩
 
 #print axioms wxD_succs
+
+end RE
