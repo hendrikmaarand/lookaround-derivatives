@@ -3,15 +3,18 @@ import LookaroundDerivatives.LangOpProperties
 namespace Lang
 open Triple
 
-structure KA (A : Type) where
+-- The operations of a Kleene algebra, without axioms.
+structure KASig (A : Type) where
   plus : A → A → A
   mult : A → A → A
   star : A → A
   zero : A
   one  : A
 
-  lt (a b : A) := (plus a b) = b
+-- The canonical order of an idempotent semiring, derived from `plus`.
+def KASig.lt {A : Type} (S : KASig A) (a b : A) : Prop := S.plus a b = b
 
+structure KA (A : Type) extends KASig A where
   plus_assoc : ∀ {a b c}, plus a (plus b c) = plus (plus a b) c
   plus_comm  : ∀ {a b}, plus a b = plus b a
   plus_idem  : ∀ {a}, plus a a = a
@@ -26,11 +29,16 @@ structure KA (A : Type) where
   distr_l : ∀ {a b c}, mult a (plus b c) = plus (mult a b) (mult a c)
   distr_r : ∀ {a b c}, mult (plus a b) c = plus (mult a c) (mult b c)
 
-  star_pfp  : ∀ {a}, lt (plus one (mult a (star a))) (star a)
-  star_pfp' : ∀ {a}, lt (plus one (mult (star a) a)) (star a)
+  star_pfp  : ∀ {a}, toKASig.lt (plus one (mult a (star a))) (star a)
+  star_pfp' : ∀ {a}, toKASig.lt (plus one (mult (star a) a)) (star a)
 
-  star_lfp  : ∀ {a b x}, lt (plus b (mult a x)) x → lt (mult (star a) b) x
-  star_lfp' : ∀ {a b x}, lt (plus b (mult x a)) x → lt (mult b (star a)) x
+  star_lfp  : ∀ {a b x}, toKASig.lt (plus b (mult a x)) x → toKASig.lt (mult (star a) b) x
+  star_lfp' : ∀ {a b x}, toKASig.lt (plus b (mult x a)) x → toKASig.lt (mult b (star a)) x
+
+-- Convenience so that `K.lt a b` works for `K : KA A`.
+abbrev KA.lt {A : Type} (K : KA A) (a b : A) : Prop := K.toKASig.lt a b
+
+theorem KA.lt_def {A : Type} (K : KA A) {a b : A} : K.lt a b ↔ K.plus a b = b := Iff.rfl
 
 
 -------------------------------------------------------------------------
@@ -42,8 +50,6 @@ def ka : KA (Lang α) :=
   , star := kstar
   , zero := empty
   , one  := unit
-
-  , lt a b := union a b = b
 
   , plus_assoc := union_assoc
   , plus_comm  := union_comm
