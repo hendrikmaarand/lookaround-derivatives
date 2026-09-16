@@ -434,72 +434,114 @@ theorem concat_distr_union_r : ∀ {k l m : Lang α}, (k ∪ l) ⊙ m = (k ⊙ m
 -------------------------------------------------------------------------------
 
 
-def iterR (n : Nat) (l : Lang α) : Lang α :=
-  match n with
-  | .zero => 𝟙
-  | .succ n => l ⊙ iterR n l
+theorem kstar_lfp_help : ∀ {a b x : Lang α} {t : Triple α},
+                               b ∪ a ⊙ x ⊆ x →
+                               StarLFP a t →
+                               ∀ {m la}, ahead t = m ++ la →
+                                 b (behind t ++ mtch t, m, la) →
+                                 x (behind t, mtch t ++ m, la) := by
+  intro a b x t ss as_m m la eq b_m
+  induction as_m with
+  | @base t' u_m =>
+      rw [unit] at u_m
+      simp [u_m] at *
+      apply ss
+      left
+      exact b_m
+  | @step lb m₁ m₂ la' m' eq' a_m as_m ih =>
+      rw [behind, mtch, ahead] at *
+      apply ss
+      right
+      rw [eq'] at b_m ⊢
+      rw [eq] at a_m
+      exists m₁, m₂ ++ m
+      simp [behind, mtch, ahead]
+      rw [←List.append_assoc] at b_m
+      exact ⟨a_m, ih eq b_m⟩
 
-theorem kstar_iterR {α} {l : Lang α} {t : Triple α} (ls_m : l⋆ t) : ∃ n, iterR n l t := by
-  induction ls_m with
-  | base u_m => exists 0
-  | @step lb m₁ m₂ la m eq l_m' ls_m' ih =>
-      have ⟨n, i_m⟩ := ih
-      exists n + 1
-      exists m₁, m₂
-
-theorem iterR_kstar {α} {l : Lang α} {t : Triple α} {n : Nat} (i_m : iterR n l t) : l⋆ t := by
-  match n with
-  | .zero => exact StarLFP.base i_m
-  | .succ n =>
-      rw [iterR] at i_m
-      have ⟨y₁, y₂, eq, l_m, i_m'⟩ := i_m
-      have ls_m := iterR_kstar i_m'
-      exact StarLFP.step eq l_m ls_m
-
--- Kleene star of l is iterated multiplication of l.
-theorem kstar_iter_equiv {α} (l : Lang α) {t : Triple α} : l⋆ t ↔ ∃ n, iterR n l t :=
-  Iff.intro kstar_iterR
-            (λ ⟨_, i_m⟩ => iterR_kstar i_m)
-
-
-theorem iterR_succ {α} (n : Nat) (l : Lang α) : iterR n l ⊙ l = iterR (n + 1) l := by
-  match n with
-  | .zero =>
-      rw [iterR, iterR, iterR]
-      rw [concat_unit_l, concat_unit_r]
-
-  | .succ n =>
-      rw [iterR, iterR]
-      rw [←concat_assoc]
-      rw [iterR_succ n l]
+theorem kstar_lfp : ∀ {a b x : Lang α}, b ∪ a ⊙ x ⊆ x → a⋆ ⊙ b ⊆ x := by
+  intro a b x ss t ⟨m₁, m₂, eq, as_m, b_m⟩
+  rw [eta t, eq]
+  exact kstar_lfp_help ss as_m rfl b_m
 
 
-theorem iterR_succ' {α} (n : Nat) (l : Lang α) : iterR (n + 1) l = l ⊙ iterR n l := by
-  rw [iterR]
 
+
+theorem kstar_lfp'_help : ∀ {a b x : Lang α} {t : Triple α},
+                                b ∪ x ⊙ a ⊆ x →
+                                StarLFP a t →
+                                ∀ {lb m}, behind t = lb ++ m →
+                                  x (lb, m, mtch t ++ ahead t) →
+                                  x (lb, m ++ mtch t, ahead t) := by
+  intro a b x t ss as_m lb m eq x_m
+  induction as_m generalizing lb m with
+  | @base t u_m =>
+      rw [unit] at u_m
+      simp [u_m] at *
+      exact x_m
+  | @step lb' m₁ m₂ la m' eq' a_m as_m ih =>
+      rw [behind, mtch, ahead] at *
+      subst eq eq'
+      rw [←List.append_assoc]
+      apply @ih lb (m ++ m₁) (by simp)
+      apply ss
+      right
+      exists m, m₁
+      rw [behind, mtch, ahead]
+      simp at x_m
+      simp [a_m, x_m]
+
+theorem kstar_lfp' : ∀ {a b x : Lang α}, b ∪ x ⊙ a ⊆ x → b ⊙ a⋆ ⊆ x := by
+  intro a b x ss t ⟨m₁, m₂, eq, b_m, as_m⟩
+  rw [eta t, eq]
+  exact kstar_lfp'_help ss as_m rfl (ss (Or.inl b_m))
+
+
+
+
+-- Two inclusions that are just the `step` constructor of `StarLFP`.
+
+theorem sub_kstar : ∀ {l : Lang α}, l ⊆ l⋆ := by
+  intro l t l_m
+  rw [eta t]
+  apply StarLFP.step (m₁ := mtch t) (m₂ := []) (by simp)
+  . simpa [←eta] using l_m
+  . exact StarLFP.base rfl
+
+theorem concat_kstar_sub : ∀ {l : Lang α}, l ⊙ l⋆ ⊆ l⋆ := by
+  intro l t ⟨m₁, m₂, eq, l_m, sl_m⟩
+  rw [eta t]
+  exact StarLFP.step eq l_m sl_m
 
 
 theorem kstar_concat_lem : ∀ {l : Lang α}, l ⊙ l⋆ = l⋆ ⊙ l := by
   intro l
+  have star_l_ss : l⋆ ⊙ l ⊆ l⋆ := by
+    apply kstar_lfp
+    intro t m
+    rcases m with l_m | ll_m
+    . exact sub_kstar l_m
+    . exact concat_kstar_sub ll_m
   ext t
   apply Iff.intro
-  . intro ⟨y₁, y₂, eq, l_m, ls_m⟩
-    have ⟨n, i_m⟩ := (kstar_iter_equiv l).mp ls_m
-    have mem : (l ⊙ iterR n l) t := ⟨y₁, y₂, eq, l_m, i_m⟩
-    rw [←iterR_succ'] at mem
-    rw [←iterR_succ] at mem
-    have ⟨y₁, y₂, eq, i_m, l_m⟩ := mem
-    have ls_m := iterR_kstar i_m
-    exists y₁, y₂
-  . intro ⟨y₁, y₂, eq, ls_m, l_m⟩
-    have ⟨n, i_m⟩ := (kstar_iter_equiv l).mp ls_m
-    have mem : (iterR n l ⊙ l) t := ⟨y₁, y₂, eq, i_m, l_m⟩
-    rw [iterR_succ] at mem
-    rw [iterR_succ'] at mem
-    have ⟨y₁, y₂, eq, l_m, i_m⟩ := mem
-    have ls_m := iterR_kstar i_m
-    exists y₁, y₂
-
+  . revert t
+    apply kstar_lfp'
+    intro t m
+    rcases m with l_m | ⟨m₁, m₂, eq, sl_m, l_m⟩
+    . exists [], mtch t
+      refine ⟨by simp, StarLFP.base rfl, ?_⟩
+      simpa [←eta] using l_m
+    . exists m₁, m₂
+      exact ⟨eq, star_l_ss sl_m, l_m⟩
+  . revert t
+    apply kstar_lfp
+    intro t m
+    rcases m with l_m | ⟨m₁, m₂, eq, l_m, sl_m⟩
+    . exists mtch t, []
+      refine ⟨by simp, ?_, StarLFP.base rfl⟩
+      simpa [←eta] using l_m
+    . exists m₁, m₂
+      exact ⟨eq, l_m, concat_kstar_sub sl_m⟩
 
 
 theorem kstar_expand : ∀ {l : Lang α}, l⋆ = 𝟙 ∪ l ⊙ l⋆ := by
@@ -528,6 +570,9 @@ theorem kstar_expand' : ∀ {l : Lang α}, l⋆ = 𝟙 ∪ l⋆ ⊙ l := by
   exact kstar_expand
 
 
+-------------------------------------------------------------------------------
+
+
 theorem subset_union_lemma {k l : Lang α} : k ⊆ l ↔ k ∪ l = l := by
   apply Iff.intro
   . intro ss
@@ -540,83 +585,6 @@ theorem subset_union_lemma {k l : Lang α} : k ⊆ l ↔ k ∪ l = l := by
     intro t k_t
     rw [←leq, union]
     simp [k_t]
-
-
-
-theorem iterR_lfp : ∀ {a b x : Lang α} {n : Nat},
-                          b ∪ a ⊙ x ⊆ x → iterR n a ⊙ b ⊆ x := by
-  intro a b x n
-  intro ss t mem
-  match n with
-  | .zero =>
-      rw [iterR, concat_unit_l] at mem
-      apply @ss t
-      rw [union]
-      left
-      exact mem
-
-  | .succ n =>
-      rw [iterR, ←concat_assoc] at mem
-      have ih := @iterR_lfp α a b x n ss
-      apply @ss t
-      rw [union]
-      right
-      have ⟨y₁, y₂, eq, a_m, ib_m⟩ := mem
-      exists y₁, y₂
-      simp [eq, a_m]
-      exact ih ib_m
-
-theorem iterR_lfp' : ∀ {a b x : Lang α} {n : Nat},
-                           b ∪ x ⊙ a ⊆ x → b ⊙ iterR n a ⊆ x := by
-  intro a b x n
-  intro ss t mem
-  match n with
-  | .zero =>
-      rw [iterR, concat_unit_r] at mem
-      apply @ss t
-      rw [union]
-      left
-      exact mem
-
-  | .succ n =>
-      have ⟨y₁, y₂, eq, b_m, c_m⟩ := mem
-      rw [←iterR_succ] at c_m
-      have ih := @iterR_lfp' α a b x n ss
-      apply @ss t
-      rw [union]
-      right
-      have ⟨w₁, w₂, eq', i_m, a_m⟩ := c_m
-      exists y₁ ++ w₁, w₂
-      rw [behind, mtch, ahead] at *
-      simp at a_m
-      simp [eq, eq', a_m]
-      apply ih
-      exists y₁, w₁
-      rw [behind, mtch, ahead]
-      rw [eq', List.append_assoc] at b_m
-      simp [b_m, i_m]
-
-
-theorem kstar_lfp : ∀ {a b x : Lang α}, b ∪ a ⊙ x ⊆ x → a⋆ ⊙ b ⊆ x := by
-  intro a b x ss
-  intro t
-  intro ⟨y₁, y₂, eq, as_m, b_m⟩
-
-  have ⟨n, i_m⟩ := kstar_iterR as_m
-  apply @iterR_lfp α a b x n ss
-
-  exists y₁, y₂
-
-
-theorem kstar_lfp' : ∀ {a b x : Lang α}, b ∪ x ⊙ a ⊆ x → b ⊙ a⋆ ⊆ x := by
-  intro a b x ss
-  intro t
-  intro ⟨y₁, y₂, eq, b_m, as_m⟩
-
-  have ⟨n, i_m⟩ := kstar_iterR as_m
-  apply @iterR_lfp' α a b x n ss
-
-  exists y₁, y₂
 
 
 -------------------------------------------------------------------------------
