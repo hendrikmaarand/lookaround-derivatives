@@ -434,140 +434,191 @@ theorem concat_distr_union_r : ∀ {k l m : Lang α}, (k ∪ l) ⊙ m = (k ⊙ m
 -------------------------------------------------------------------------------
 
 
-theorem kstar_lfp_help : ∀ {a b x : Lang α} {t : Triple α},
-                               b ∪ a ⊙ x ⊆ x →
-                               StarLFP a t →
-                               ∀ {m la}, ahead t = m ++ la →
-                                 b (behind t ++ mtch t, m, la) →
-                                 x (behind t, mtch t ++ m, la) := by
-  intro a b x t ss as_m m la eq b_m
-  induction as_m with
-  | @base t' u_m =>
-      rw [unit] at u_m
+theorem sub_antisymm : ∀ {k l : Lang α}, k ⊆ l → l ⊆ k → k = l := by
+  intro k l kl lk
+  ext t
+  exact ⟨kl, lk⟩
+
+theorem concat_mono : ∀ {k k' l l' : Lang α}, k ⊆ k' → l ⊆ l' → k ⊙ l ⊆ k' ⊙ l' := by
+  intro k k' l l' kk ll t ⟨m₁, m₂, eq, k_m, l_m⟩
+  exact ⟨m₁, m₂, eq, kk k_m, ll l_m⟩
+
+-------------------------------------------------------------------------------
+-- least fixed points
+
+-- `lfp F` is a lower bound of the pre-fixed points of `F` ...
+theorem lfp_lowerbound : ∀ {F : Lang α → Lang α} {x : Lang α},
+                           F x ⊆ x → lfp F ⊆ x := by
+  intro F x ss t lfp_m
+  exact lfp_m x ss
+
+-- ... and the greatest one.
+theorem lfp_greatest : ∀ {F : Lang α → Lang α} {k : Lang α},
+                         (∀ x, F x ⊆ x → k ⊆ x) → k ⊆ lfp F := by
+  intro F k h t k_m x ss
+  exact h x ss k_m
+
+-- For monotone `F`, `lfp F` is itself a pre-fixed point of `F`,
+-- hence the least pre-fixed point.
+theorem lfp_pfp : ∀ {F : Lang α → Lang α}, Monotone F → F (lfp F) ⊆ lfp F := by
+  intro F mono
+  apply lfp_greatest
+  intro x ss t m
+  exact ss (mono (lfp_lowerbound ss) m)
+
+-- It is also a fixed point ...
+theorem lfp_fixpoint : ∀ {F : Lang α → Lang α}, Monotone F → F (lfp F) = lfp F := by
+  intro F mono
+  exact sub_antisymm (lfp_pfp mono) (lfp_lowerbound (mono (lfp_pfp mono)))
+
+-- ... and the least one.
+theorem lfp_least_fixpoint : ∀ {F : Lang α → Lang α} {x : Lang α},
+                               F x = x → lfp F ⊆ x := by
+  intro F x eq
+  apply lfp_lowerbound
+  rw [eq]
+  exact λ h => h
+
+theorem lfp_induct : ∀ {F : Lang α → Lang α} {x : Lang α},
+                       Monotone F → F (lfp F ∩ x) ⊆ x → lfp F ⊆ x := by
+  intro F x mono ss t m
+  have h : lfp F ⊆ lfp F ∩ x := by
+    apply lfp_lowerbound
+    intro t m
+    exact ⟨lfp_pfp mono (mono (λ h => h.1) m), ss m⟩
+  exact (h m).2
+
+-------------------------------------------------------------------------------
+-- Kleene star `l⋆ = lfp (λ x => 𝟙 ∪ l ⊙ x)`
+
+theorem kstar_step_mono : ∀ {l : Lang α}, Monotone (λ x => 𝟙 ∪ l ⊙ x) := by
+  intro l k k' kk t m
+  rcases m with u_m | lk_m
+  . exact Or.inl u_m
+  . exact Or.inr (concat_mono (λ h => h) kk lk_m)
+
+-- `l⋆` is the least pre-fixed point of `λ x => 𝟙 ∪ l ⊙ x` ...
+theorem kstar_pfp : ∀ {l : Lang α}, 𝟙 ∪ l ⊙ l⋆ ⊆ l⋆ :=
+  lfp_pfp kstar_step_mono
+
+theorem kstar_lowerbound : ∀ {l x : Lang α}, 𝟙 ∪ l ⊙ x ⊆ x → l⋆ ⊆ x :=
+  λ ss => lfp_lowerbound ss
+
+-- ... and its least fixed point.
+theorem kstar_fixpoint : ∀ {l : Lang α}, 𝟙 ∪ l ⊙ l⋆ = l⋆ :=
+  lfp_fixpoint kstar_step_mono
+
+theorem kstar_least_fixpoint : ∀ {l x : Lang α}, 𝟙 ∪ l ⊙ x = x → l⋆ ⊆ x :=
+  λ eq => lfp_least_fixpoint eq
+
+theorem kstar_induct : ∀ {l x : Lang α}, 𝟙 ∪ l ⊙ (l⋆ ∩ x) ⊆ x → l⋆ ⊆ x :=
+  lfp_induct kstar_step_mono
+
+
+-- The two halves of `kstar_pfp`.
+
+theorem unit_sub_kstar : ∀ {l : Lang α}, 𝟙 ⊆ l⋆ :=
+  λ u_m => kstar_pfp (Or.inl u_m)
+
+theorem concat_kstar_sub : ∀ {l : Lang α}, l ⊙ l⋆ ⊆ l⋆ :=
+  λ ls_m => kstar_pfp (Or.inr ls_m)
+
+theorem sub_kstar : ∀ {l : Lang α}, l ⊆ l⋆ := by
+  intro l t l_m
+  rw [←concat_unit_r (l := l)] at l_m
+  exact concat_kstar_sub (concat_mono (λ h => h) unit_sub_kstar l_m)
+
+
+-- `a⋆ ⊙ b` is below every pre-fixed point of `λ x => b ∪ a ⊙ x`.
+theorem kstar_lfp : ∀ {a b x : Lang α}, b ∪ a ⊙ x ⊆ x → a⋆ ⊙ b ⊆ x := by
+  intro a b x ss
+  -- Invariant: a triple of `a⋆` followed by a triple of `b` gives a triple of `x`.
+  have inv : a⋆ ⊆ (λ t => ∀ {m la}, ahead t = m ++ la →
+                            b (behind t ++ mtch t, m, la) →
+                            x (behind t, mtch t ++ m, la)) := by
+    apply kstar_lowerbound
+    intro t p m la eq b_m
+    rcases p with u_m | ⟨m₁, m₂, mt_eq, a_m, y_m⟩
+    . rw [unit] at u_m
       simp [u_m] at *
       apply ss
       left
       exact b_m
-  | @step lb m₁ m₂ la' m' eq' a_m as_m ih =>
-      rw [behind, mtch, ahead] at *
-      apply ss
+    . apply ss
       right
-      rw [eq'] at b_m ⊢
+      rw [mt_eq] at b_m ⊢
       rw [eq] at a_m
       exists m₁, m₂ ++ m
       simp [behind, mtch, ahead]
       rw [←List.append_assoc] at b_m
-      exact ⟨a_m, ih eq b_m⟩
-
-theorem kstar_lfp : ∀ {a b x : Lang α}, b ∪ a ⊙ x ⊆ x → a⋆ ⊙ b ⊆ x := by
-  intro a b x ss t ⟨m₁, m₂, eq, as_m, b_m⟩
+      exact ⟨a_m, y_m eq b_m⟩
+  intro t ⟨m₁, m₂, eq, as_m, b_m⟩
   rw [eta t, eq]
-  exact kstar_lfp_help ss as_m rfl b_m
+  exact inv as_m rfl b_m
 
 
-
-
-theorem kstar_lfp'_help : ∀ {a b x : Lang α} {t : Triple α},
-                                b ∪ x ⊙ a ⊆ x →
-                                StarLFP a t →
-                                ∀ {lb m}, behind t = lb ++ m →
-                                  x (lb, m, mtch t ++ ahead t) →
-                                  x (lb, m ++ mtch t, ahead t) := by
-  intro a b x t ss as_m lb m eq x_m
-  induction as_m generalizing lb m with
-  | @base t u_m =>
-      rw [unit] at u_m
+-- `b ⊙ a⋆` is below every pre-fixed point of `λ x => b ∪ x ⊙ a`.
+theorem kstar_lfp' : ∀ {a b x : Lang α}, b ∪ x ⊙ a ⊆ x → b ⊙ a⋆ ⊆ x := by
+  intro a b x ss
+  -- Invariant: a triple of `x` followed by a triple of `a⋆` gives a triple of `x`.
+  have inv : a⋆ ⊆ (λ t => ∀ {lb m}, behind t = lb ++ m →
+                            x (lb, m, mtch t ++ ahead t) →
+                            x (lb, m ++ mtch t, ahead t)) := by
+    apply kstar_lowerbound
+    intro t p lb m eq x_m
+    rcases p with u_m | ⟨m₁, m₂, mt_eq, a_m, y_m⟩
+    . rw [unit] at u_m
       simp [u_m] at *
       exact x_m
-  | @step lb' m₁ m₂ la m' eq' a_m as_m ih =>
-      rw [behind, mtch, ahead] at *
-      subst eq eq'
-      rw [←List.append_assoc]
-      apply @ih lb (m ++ m₁) (by simp)
+    . rw [eq] at a_m y_m
+      rw [mt_eq, ←List.append_assoc]
+      apply y_m (by simp [behind])
       apply ss
       right
       exists m, m₁
-      rw [behind, mtch, ahead]
+      rw [mt_eq] at x_m
       simp at x_m
-      simp [a_m, x_m]
-
-theorem kstar_lfp' : ∀ {a b x : Lang α}, b ∪ x ⊙ a ⊆ x → b ⊙ a⋆ ⊆ x := by
-  intro a b x ss t ⟨m₁, m₂, eq, b_m, as_m⟩
+      exact ⟨rfl, x_m, a_m⟩
+  intro t ⟨m₁, m₂, eq, b_m, as_m⟩
   rw [eta t, eq]
-  exact kstar_lfp'_help ss as_m rfl (ss (Or.inl b_m))
+  exact inv as_m rfl (ss (Or.inl b_m))
 
 
-
-
--- Two inclusions that are just the `step` constructor of `StarLFP`.
-
-theorem sub_kstar : ∀ {l : Lang α}, l ⊆ l⋆ := by
-  intro l t l_m
-  rw [eta t]
-  apply StarLFP.step (m₁ := mtch t) (m₂ := []) (by simp)
-  . simpa [←eta] using l_m
-  . exact StarLFP.base rfl
-
-theorem concat_kstar_sub : ∀ {l : Lang α}, l ⊙ l⋆ ⊆ l⋆ := by
-  intro l t ⟨m₁, m₂, eq, l_m, sl_m⟩
-  rw [eta t]
-  exact StarLFP.step eq l_m sl_m
-
-
-theorem kstar_concat_lem : ∀ {l : Lang α}, l ⊙ l⋆ = l⋆ ⊙ l := by
-  intro l
-  have star_l_ss : l⋆ ⊙ l ⊆ l⋆ := by
-    apply kstar_lfp
+-- `l⋆` is also a pre-fixed point of `λ x => 𝟙 ∪ x ⊙ l`.
+theorem kstar_pfp' : ∀ {l : Lang α}, 𝟙 ∪ l⋆ ⊙ l ⊆ l⋆ := by
+  intro l t m
+  rcases m with u_m | sl_m
+  . exact unit_sub_kstar u_m
+  . refine kstar_lfp ?_ sl_m
     intro t m
     rcases m with l_m | ll_m
     . exact sub_kstar l_m
     . exact concat_kstar_sub ll_m
-  ext t
-  apply Iff.intro
-  . revert t
-    apply kstar_lfp'
-    intro t m
-    rcases m with l_m | ⟨m₁, m₂, eq, sl_m, l_m⟩
-    . exists [], mtch t
-      refine ⟨by simp, StarLFP.base rfl, ?_⟩
-      simpa [←eta] using l_m
-    . exists m₁, m₂
-      exact ⟨eq, star_l_ss sl_m, l_m⟩
-  . revert t
-    apply kstar_lfp
-    intro t m
-    rcases m with l_m | ⟨m₁, m₂, eq, l_m, sl_m⟩
-    . exists mtch t, []
-      refine ⟨by simp, ?_, StarLFP.base rfl⟩
-      simpa [←eta] using l_m
-    . exists m₁, m₂
-      exact ⟨eq, l_m, concat_kstar_sub sl_m⟩
 
 
-theorem kstar_expand : ∀ {l : Lang α}, l⋆ = 𝟙 ∪ l ⊙ l⋆ := by
+theorem kstar_concat_lem : ∀ {l : Lang α}, l ⊙ l⋆ = l⋆ ⊙ l := by
   intro l
-  ext t
-  rw [kstar, union]
-  apply Iff.intro
-  . intro kl_mem
-    match kl_mem with
-    | .base h => simp [h]
-    | .step (m₁ := m₁) (m₂ := m₂) p q r =>
-        rw [concat]
-        apply Or.inr
-        exists m₁, m₂
+  have star_l_ss : l⋆ ⊙ l ⊆ l⋆ := λ sl_m => kstar_pfp' (Or.inr sl_m)
+  apply sub_antisymm
+  . refine kstar_lfp' ?_
+    intro t m
+    rcases m with l_m | sll_m
+    . rw [←concat_unit_l (l := l)] at l_m
+      exact concat_mono unit_sub_kstar (λ h => h) l_m
+    . exact concat_mono star_l_ss (λ h => h) sll_m
+  . refine kstar_lfp ?_
+    intro t m
+    rcases m with l_m | lls_m
+    . rw [←concat_unit_r (l := l)] at l_m
+      exact concat_mono (λ h => h) unit_sub_kstar l_m
+    . exact concat_mono (λ h => h) concat_kstar_sub lls_m
 
-  . intro p
-    apply Or.elim p
-    . intro h
-      exact .base h
-    . intro ⟨m₁, m₂, eq, l_mem, k_mem⟩
-      exact .step eq l_mem k_mem
 
-theorem kstar_expand' : ∀ {l : Lang α}, l⋆ = 𝟙 ∪ l⋆ ⊙ l := by
+-- `l⋆` is also a fixed point of `λ x => 𝟙 ∪ x ⊙ l`.
+theorem kstar_fixpoint' : ∀ {l : Lang α}, 𝟙 ∪ l⋆ ⊙ l = l⋆ := by
   intro l
   rw [←kstar_concat_lem]
-  exact kstar_expand
+  exact kstar_fixpoint
 
 
 -------------------------------------------------------------------------------

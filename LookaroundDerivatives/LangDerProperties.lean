@@ -49,8 +49,8 @@ theorem nlbl_diff {k l : Lang α} : nlbl (k \ l) ↔ nlbl k ∧ ¬ nlbl l := by
   rw [nlbl, diff, nlbl, nlbl]
 
 theorem nlbl_kstar {l : Lang α} : nlbl (kstar l) ↔ True := by
-  simp [nlbl, kstar]
-  apply StarLFP.base
+  simp [nlbl]
+  apply unit_sub_kstar
   rw [unit, mtch]
 
 theorem nlbl_lookbehind {l : Lang α} : nlbl (◁ l) ↔ nlbl l := by
@@ -371,66 +371,60 @@ theorem derLAhd_diff {k l : Lang α} : ∀ (a : α),
 ---------------------------------------------------------------
 -- derivatives of Kleene star `l⋆`
 
-theorem derLBhd_StarLFP (a : α) (l : Lang α)(tr : Triple α)
-                  {tr' : Triple α} (eq : tr' = (a :: behind tr, mtch tr, ahead tr))
-                  : StarLFP l             tr' ↔
-                    StarLFP (derLBhd a l) tr := by
-
-  apply Iff.intro
-  . intro ls_mem
-    induction ls_mem generalizing tr with
-    | @base t u_m =>
-        rw [unit, eq, mtch] at u_m
-        exact StarLFP.base u_m
-    | @step lb m₁ m₂ la m eq' l_m ls_m ih =>
-        injection eq with p q
-        injection q  with q r
-        rw [eq'] at q
-        rw [p] at l_m
-
-        have w := derLBhd_mem a l (behind tr, m₁, m₂ ++ la)
-        rw [behind, mtch, ahead] at w
-        rw [←w] at l_m
-
-        rw [Triple.eta tr]
-        rw [←q]
-        rw [r] at l_m
-
-        have ih' := ih (behind tr ++ m₁, m₂, ahead tr)
-        rw [behind, mtch, ahead, p, r] at ih'
-
-        exact StarLFP.step rfl l_m (ih' rfl)
-
-
-  . intro ls_mem'
-    induction ls_mem' generalizing tr' with
-    | @base t u_m =>
-        rw [unit] at u_m
-        rw [eq]
-        apply StarLFP.base
-        rw [unit, mtch]
-        exact u_m
-
-    | @step lb m₁ m₂ la m eq' l_m' ls_m' ih =>
-        rw [behind, mtch, ahead] at eq
-        rw [eq, eq']
-        rw [derLBhd_mem, behind, mtch, ahead] at l_m'
-
-        rw [behind, mtch, ahead] at ih
-        have ih' := @ih (a :: lb ++ m₁, m₂, la)
-
-        apply StarLFP.step rfl l_m' (ih' rfl)
-
-
 theorem derLBhd_kstar (a : α) (l : Lang α) :
     derLBhd a l⋆ = (derLBhd a l)⋆ := by
-  ext t
+  apply sub_antisymm
+  . -- Invariant: dropping `a` from the lookbehind of a triple of `l⋆`
+    -- gives a triple of `(derLBhd a l)⋆`.
+    have inv : l⋆ ⊆ (λ t => ∀ {lb}, behind t = a :: lb →
+                              (derLBhd a l)⋆ (lb, mtch t, ahead t)) := by
+      apply kstar_lowerbound
+      intro t p lb eq
+      rcases p with u_m | ⟨m₁, m₂, mt_eq, l_m, y_m⟩
+      . exact unit_sub_kstar u_m
+      . rw [eq] at l_m y_m
+        apply concat_kstar_sub
+        exact ⟨m₁, m₂, mt_eq, l_m, y_m rfl⟩
+    intro t ls_m
+    exact inv ls_m rfl
+  . apply kstar_lowerbound
+    intro t p
+    rcases p with u_m | dl_m
+    . exact unit_sub_kstar u_m
+    . rw [←derLBhd_concat] at dl_m
+      exact concat_kstar_sub dl_m
 
-  have lem : StarLFP l (a :: behind t, mtch t, ahead t) ↔ StarLFP (derLBhd a l) t :=
-    derLBhd_StarLFP a l t rfl
 
-  rw [kstar, derLBhd, kstar]
-  rw [lem]
+theorem der_kstar {l : Lang α} : ∀ (a : α),
+    der a l⋆ = (der a l) ⊙ (derLBhd a l)⋆ := by
+  intro a
+  apply sub_antisymm
+  . -- Invariant: dropping `a` from the match of a triple of `l⋆` with empty
+    -- lookbehind gives a triple of `der a l ⊙ (derLBhd a l)⋆`.
+    have inv : l⋆ ⊆ (λ t => ∀ {m la}, t = ([], a :: m, la) →
+                              (der a l ⊙ (derLBhd a l)⋆) ([], m, la)) := by
+      apply kstar_induct
+      intro t p m la eq
+      subst eq
+      rcases p with u_m | ⟨m₁, m₂, mt_eq, l_m, ls_m, y_m⟩
+      . rw [unit, mtch] at u_m
+        injections
+      . rcases List.cons_eq_append_iff.mp mt_eq with ⟨m₁_eq, m₂_eq⟩ | ⟨x, m₁_eq, m_eq⟩
+        . subst m₁_eq m₂_eq
+          exact y_m rfl
+        . subst m₁_eq m_eq
+          rw [←derLBhd_kstar]
+          exact ⟨x, m₂, rfl, ⟨rfl, l_m⟩, ls_m⟩
+    intro t ⟨bt_eq, ls_m⟩
+    rw [eta t, bt_eq]
+    exact inv ls_m rfl
+  . intro t dl_m
+    rw [←derLBhd_kstar] at dl_m
+    have ⟨bt_eq, ll_m⟩ : der a (l ⊙ l⋆) t := by
+      rw [der_concat]
+      exact Or.inl dl_m
+    rw [der]
+    exact ⟨bt_eq, concat_kstar_sub ll_m⟩
 
 
 theorem derLAhd_kstar {l : Lang α} : ∀ (a : α), derLAhd a l⋆ = ◁ 𝟙 := by
@@ -443,88 +437,7 @@ theorem derLAhd_kstar {l : Lang α} : ∀ (a : α), derLAhd a l⋆ = ◁ 𝟙 :=
     exact ⟨mt_eq, bt_eq⟩
 
   . intro ⟨mt_eq, bt_eq⟩
-    exact ⟨bt_eq, mt_eq, StarLFP.base (by rw [unit, mtch])⟩
-
-
-
-theorem der_help {α : Type}
-                 (a : α) (l : Lang α)
-                 (m la : List α)
-                 {tr : Triple α} (tr_eq  : tr  = ([], a :: m, la))
-                 : StarLFP l tr → ∃ (m₁ m₂ : List α),
-                                    m = m₁ ++ m₂ ∧
-                                    der a l ([], m₁, m₂ ++ la) ∧
-                                    StarLFP (derLBhd a l) (m₁, m₂, la) := by
-  intro ls_mem
-  induction ls_mem with
-  | @base t u_m =>
-      rw [unit] at u_m
-      rw [Triple.eta t, u_m] at tr_eq
-      injections
-
-  | @step lb' m₁' m₂' la' m' eq l_m ls_m ih =>
-      injections lb'_eq _ m'_eq la'_eq
-      subst lb'_eq m'_eq la'_eq
-
-      rw  [List.cons_eq_append_iff] at eq
-      apply Or.elim eq
-      . intro ⟨eq1, eq2⟩
-        subst eq1 eq2
-        apply ih
-        rfl
-
-      . intro ⟨x, m₁'_eq, m_eq⟩
-        subst m₁'_eq m_eq
-
-        exists x, m₂'
-        simp
-        apply And.intro
-        . rw [der_mem a l ([], x, m₂' ++ la') rfl]
-          exact l_m
-        . simp at ls_m
-          rw [derLBhd_StarLFP a l (x, m₂', la') (by rw [behind, mtch, ahead])] at ls_m
-          exact ls_m
-
-theorem der_help' {α : Type}
-                  (a : α) (l : Lang α)
-                  (m la : List α)
-                  {tr : Triple α} (tr_eq  : tr  = ([], a :: m, la))
-                  (h : ∃ (m₁ m₂ : List α),
-                         m = m₁ ++ m₂ ∧
-                         der a l ([], m₁, m₂ ++ la) ∧
-                         StarLFP (derLBhd a l) (m₁, m₂, la))
-                  : StarLFP l tr := by
-  have ⟨m₁, m₂, mt_eq, dl_m, ls_m⟩ := h
-  rw [tr_eq, mt_eq]
-
-  have l_m := der_mem a l ([], m₁, m₂ ++ la) rfl
-  rw [l_m, behind, mtch, ahead] at dl_m
-
-  have lbhd_s := derLBhd_StarLFP a l (m₁, m₂, la) rfl
-  rw [behind, mtch, ahead] at lbhd_s
-  rw [←lbhd_s] at ls_m
-
-  exact StarLFP.step rfl dl_m ls_m
-
-
-theorem der_kstar {l : Lang α} : ∀ (a : α),
-    der a l⋆ = (der a l) ⊙ (derLBhd a l)⋆ := by
-  intro a
-  ext t
-  rw [kstar, der, kstar, concat]
-  apply Iff.intro
-  . intro ⟨bt_eq, p⟩
-    simp [bt_eq]
-    exact der_help a l (mtch t) (ahead t) rfl p
-
-  . intro ⟨m₁, m₂, mt_eq, dl_m, ls_m⟩
-
-    have bt_eq := der_mem' dl_m
-    rw [behind] at bt_eq
-    simp [bt_eq]
-    simp [bt_eq] at dl_m ls_m
-
-    exact der_help' a l (mtch t) (ahead t) rfl ⟨m₁, m₂, mt_eq, dl_m, ls_m⟩
+    exact ⟨bt_eq, mt_eq, unit_sub_kstar (by rw [unit, mtch])⟩
 
 
 ---------------------------------------------------------------

@@ -66,13 +66,9 @@ def ka : KA (Lang α) :=
   , distr_r := concat_distr_union_r
 
   , star_pfp  := by intro a
-                    show (𝟙 ∪ a ⊙ a⋆) ∪ a⋆ = a⋆
-                    rw [←kstar_expand]
-                    exact union_idem
+                    exact subset_union_lemma.mp kstar_pfp
   , star_pfp' := by intro a
-                    show (𝟙 ∪ a⋆ ⊙ a) ∪ a⋆ = a⋆
-                    rw [←kstar_expand']
-                    exact union_idem
+                    exact subset_union_lemma.mp kstar_pfp'
   , star_lfp  := by intro a b x eq
                     exact subset_union_lemma.mp (kstar_lfp (subset_union_lemma.mpr eq))
   , star_lfp' := by intro a b x eq

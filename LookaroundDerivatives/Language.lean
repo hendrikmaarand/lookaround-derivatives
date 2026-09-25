@@ -44,20 +44,6 @@ def concat (k l : Lang α) : Lang α := λ t =>
     l (behind t ++ m₁, m₂, ahead t)
 
 
--- Kleene star as inductive predicate.
--- TODO: step using concat explicitly?
-inductive StarLFP (l : Lang α) : Lang α where
-| base : {t : Triple α} → unit t → StarLFP l t
-| step : {lb m₁ m₂ la m : List α} →
-         m = m₁ ++ m₂ →
-         l (lb, m₁, m₂ ++ la) →
-         StarLFP l (lb ++ m₁, m₂, la) →
-         StarLFP l (lb, m, la)
-
-def kstar (l : Lang α) : Lang α := StarLFP l
-
-
-
 def lookbehind (l : Lang α) : Lang α := λ t =>
   mtch t = [] ∧ l ([], behind t, ahead t)
 
@@ -83,13 +69,30 @@ infixl:55 " \\ " => diff
 
 infixr:65 " ⊙ " => concat
 
-postfix:max "⋆" => kstar
-
 prefix:max "◁" => lookbehind
 
 prefix:max "▷" => lookahead
 
 infix:50 " ⊆ " => LSub
+
+----------------------------------------------
+-- least fixed points and Kleene star
+
+def Monotone (F : Lang α → Lang α) : Prop :=
+  ∀ {k l : Lang α}, k ⊆ l → F k ⊆ F l
+
+-- The intersection of all pre-fixed points of `F`, i.e. of all languages `x`
+-- with `F x ⊆ x`.
+--
+-- For monotone `F` it is the least pre-fixed point (`lfp_pfp`, `lfp_lowerbound`)
+-- and the least fixed point of `F` (`lfp_fixpoint`, `lfp_least_fixpoint`).
+def lfp (F : Lang α → Lang α) : Lang α := λ t =>
+  ∀ (x : Lang α), F x ⊆ x → x t
+
+-- Kleene star: the least language that contains `𝟙` and is closed under `l ⊙ ·`.
+def kstar (l : Lang α) : Lang α := lfp (λ x => 𝟙 ∪ l ⊙ x)
+
+postfix:max "⋆" => kstar
 
 ----------------------------------------------
 -- nullability and derivatives
