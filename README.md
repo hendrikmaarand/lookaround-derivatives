@@ -1,6 +1,6 @@
 # Derivatives of regular expressions with lookarounds
 
-This repository is the Lean formalisation of the paper "Derivatives of regular expressions with lookarounds".
+This repository is the Lean formalisation for the paper "Derivatives of regular expressions with lookarounds" by L. Gravier and H. Maarand ([https://doi.org/10.1007/978-981-92-8387-3_14](https://doi.org/10.1007/978-981-92-8387-3_14)).
 
 # Structure
 
